@@ -30,7 +30,10 @@ def read_file(filename):
                         goals.insert(int(graph[i][j][1:]), (i, j))
     return row, col, time, fuel, graph, starts, goals
 
-
+# ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+# START = STARTS[0]
+# GOAL = GOALS[0]
+# PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
 
 # MANHATTAN DISTANCE FOR CALCULATING HEURISTIC VALUE:
 def manhattan(start, end):
@@ -161,13 +164,20 @@ def A_star(problem, level=1):
     return [-1]                    
 
 # LEVEL 2, 3 ONLY
-def TreeSearchBFS(problem, level=1):
-    row, col, time, fuel, graph, start, end = problem 
-    queue = [(start[0], start[1], time, fuel, [start])]
-    while queue:
-        curR, curC, curTime, curFuel, curPath = queue.pop(0)
+def A_star_level_3(problem, level=1):
+    row, col, time, fuel, graph, start, end = problem
+    x, y = start
+    visited = {} 
+    visited[(x, y, time, fuel)] = (x, y, time, fuel)
+    path_cost = {(x, y, time, fuel): 0}
+    frontier = [(manhattan(start, end), time, fuel, x, y)]
+    while frontier:
+        curCost, curTime, curFuel, curR, curC = heappop(frontier)
+        curCost = curCost - manhattan((curR, curC), end)
         if (curR, curC) == end:
-            return curPath
+            temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
+            path = [(item[0], item[1]) for item in temp]
+            return path
         if level == 3 and curFuel <= 0:
             continue
         if level >= 2 and curTime <= 0:
@@ -176,192 +186,191 @@ def TreeSearchBFS(problem, level=1):
             neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
             if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
                 continue
-            if graph[neighborX][neighborY] != -1 and (neighborX, neighborY) not in curPath:
+            if graph[neighborX][neighborY] != -1 and (neighborX, neighborY):
+                newCost = curCost + 1
                 newTime = curTime - 1
                 newFuel = curFuel - 1
+                if (neighborX, neighborY, newTime, newFuel) in path_cost and path_cost[(neighborX, neighborY, newTime, newFuel)] <= newCost:
+                    continue
                 if level == 3 and type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
                     newFuel = fuel
                     newTime -= int(graph[neighborX][neighborY][1:]) 
                 if level >= 2 and type(graph[neighborX][neighborY]) == type(1):
                     newTime -= int(graph[neighborX][neighborY])
-                queue.append((neighborX, neighborY, newTime, newFuel, curPath + [(neighborX, neighborY)]))
+                visited[(neighborX, neighborY, newTime, newFuel)] = (curR, curC, curTime, curFuel)
+                path_cost[(neighborX, neighborY, newTime, newFuel)] = newCost
+                heappush(frontier, (newCost + manhattan((neighborX, neighborY), end), newTime, newFuel, neighborX, neighborY))
     return [-1]
 
 # LEVEL 4 - LET KIEN COOK
-def copyOfTreeSearchBFS(problem, level=1):
-    row, col, time, fuel, graph, start, end = problem 
-    queue = [(start[0], start[1], time, fuel, [start])]
+def copyOfA_star_level_3(problem, level=1):
+    row, col, time, fuel, graph, start, end = problem
+    x, y = start
+    visited = {} 
+    visited[(x, y, time, fuel)] = (x, y, time, fuel)
+    path_cost = {(x, y, time, fuel): 0}
+    frontier = [(manhattan(start, end), time, fuel, x, y)]
     path = []
-    h = row * col
-    while queue:
-        curR, curC, curTime, curFuel, curPath = queue.pop(0)
+    min_heuristic = row * col
+    while frontier:
+        curCost, curTime, curFuel, curR, curC = heappop(frontier)
+        curCost = curCost - manhattan((curR, curC), end)
         if (curR, curC) == end:
-            return curPath
+            return trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
         if level == 3 and curFuel <= 0:
-            if manhattan((curR, curC), end) < h:
-                h = manhattan((curR, curC), end)
-                path = curPath
+            temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
+            if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
+                min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
+                path = temp
             continue
         if level >= 2 and curTime <= 0:
-            if manhattan((curR, curC), end) < h:
-                h = manhattan((curR, curC), end)
-                path = curPath
+            temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
+            if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
+                min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
+                path = temp
             continue
         for i in range(4):
             neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
             if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
-                if manhattan((curR, curC), end) < h:
-                    h = manhattan((curR, curC), end)
-                    path = curPath
+                temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
+                if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
+                    min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
+                    path = temp
                 continue
-            if graph[neighborX][neighborY] != -1 and (neighborX, neighborY) not in curPath:
+            if graph[neighborX][neighborY] != -1 and (neighborX, neighborY):
+                newCost = curCost + 1
                 newTime = curTime - 1
                 newFuel = curFuel - 1
+                if (neighborX, neighborY, newTime, newFuel) in path_cost and path_cost[(neighborX, neighborY, newTime, newFuel)] <= newCost:
+                    temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
+                    if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
+                        min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
+                        path = temp
+                    continue
                 if level == 3 and type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
                     newFuel = fuel
                     newTime -= int(graph[neighborX][neighborY][1:]) 
                 if level >= 2 and type(graph[neighborX][neighborY]) == type(1):
                     newTime -= int(graph[neighborX][neighborY])
-                queue.append((neighborX, neighborY, newTime, newFuel, curPath + [(neighborX, neighborY)]))
+                visited[(neighborX, neighborY, newTime, newFuel)] = (curR, curC, curTime, curFuel)
+                path_cost[(neighborX, neighborY, newTime, newFuel)] = newCost
+                heappush(frontier, (newCost + manhattan((neighborX, neighborY), end), newTime, newFuel, neighborX, neighborY))
     return path
 
+def expand_path(path):
+    listi = []
+    for i in range(len(path) - 1):
+        if path[i][2] - path[i + 1][2] != 1:
+            listi.append((i + 1, path[i][2] - path[i + 1][2] - 1))
+    for t in range(len(listi) - 1, -1, -1):
+        for z in range(listi[t][1]):
+            p1, p2, p3, p4 = path[listi[t][0]]
+            temp = (p1, p2, p3 + 1, p4)
+            path.insert(listi[t][0], temp)
+    return path
+
+def returnPath(temp):
+    path = [(item[0], item[1]) for item in temp]
+    return path
+    
 def Level4MultiAgent(problem, starts, goals):
     row, col, time, fuel, graph, _, _ = problem
-    graph[starts[0][0]][starts[0][1]] = 'S0'
-    graph[goals[0][0]][goals[0][1]] = 'G0'
-    goalss = []
-    for u in range(len(goals)):
-        goalss.append([goals[u]])
+    
+    # create an empty graph (does not has any start or goal)
+    empty_graph = copy.deepcopy(graph)
+    for i in range(len(starts)):
+        empty_graph[starts[i][0]][starts[i][1]] = 0
+        empty_graph[goals[i][0]][goals[i][1]] = 0
+
+    # create goals list
+    goal_list = []
+    for idx in range(len(goals)):
+        goal_list.append([goals[idx]])
+
+    # list of paths (temp)
     paths = [[] for _ in range(len(starts))]
     for s in range(len(starts)):
-        g = copy.deepcopy(graph)
-        for ss in range(len(starts)):
-            if ss != s:
-                g[starts[ss][0]][starts[ss][1]] = 0
-                g[goals[ss][0]][goals[ss][1]] = 0
-        paths[s] = copyOfTreeSearchBFS((row, col, time, fuel, g, starts[s], goals[s]), 3)
+        graph_temp = copy.deepcopy(empty_graph)
+        graph_temp[starts[s][0]][starts[s][1]] = 'S'
+        graph_temp[goals[s][0]][goals[s][1]] = 'G'
+        # first find an optimized path for each start
+        paths[s] = copyOfA_star_level_3((row, col, time, fuel, graph_temp, starts[s], goals[s]), 3)
+        paths[s] = expand_path(paths[s])
 
-    if paths[0][-1] != goals[0]:
-        return [[-1] for _ in range(len(starts))], goalss
-    
+    # if there is no possible path from S to G, return -1
+    if (paths[0][-1][0], paths[0][-1][1]) != goals[0]:
+        return [[-1] for _ in range(len(starts))], goal_list
+
+    # move tracker
     move = [1 for _ in range(len(starts))]
-    wt = [0 for _ in range(len(starts))]
-    times = [time for _ in range(len(starts))]
-    fuels = [fuel for _ in range(len(starts))]
-    lost_place = []
+    
+    # main loop
     while True:
         for i in range(len(starts)):
-            dele = []
-            for l in range(len(lost_place)):
-                if graph[lost_place[l][1][0]][lost_place[l][1][1]] == 0:
-                    graph[lost_place[l][1][0]][lost_place[l][1][1]] = lost_place[l][0]
-                    dele.append(l)
-            for d in range(len(dele) - 1, -1, -1):
-                lost_place.pop(dele[d])
-            if times[i] <= 0 or fuels[i] <= 0:
+            # time and fuel check
+            if paths[i][move[i] - 1][2] <= 0 or paths[i][move[i] - 1][3] <= 0:
                 if i == 0:
-                    if times[i] <= 0:
-                        print(f'S{i} out of time')
-                    elif fuels[i] <= 0:
-                        print(f'S{i} out of fuel')
-                    return [[-1] for _ in range(len(starts))], goalss
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
-                    if times[i] <= 0:
-                        print(f'S{i} out of time')
-                    elif fuels[i] <= 0:
-                        print(f'S{i} out of fuel')
                     continue
-            print(i, move[i] - 1, (times[i], fuels[i]), starts[i])
-            if not wt[i]:
-                if type(graph[paths[i][move[i]][0]][paths[i][move[i]][1]]) == str:
-                    if graph[paths[i][move[i]][0]][paths[i][move[i]][1]][0] == 'F':
-                        wt[i] += int(graph[paths[i][move[i]][0]][paths[i][move[i]][1]][1:])
-                        fuels[i] = fuel + 1
-                        for _ in range(int(graph[paths[i][move[i]][0]][paths[i][move[i]][1]][1:])):
-                            paths[i].insert(move[i], paths[i][move[i]])
-                        lost_place.append((graph[paths[i][move[i]][0]][paths[i][move[i]][1]], paths[i][move[i]]))
-                    elif graph[paths[i][move[i]][0]][paths[i][move[i]][1]][0] == 'S':
-                        print ('here', i , int(graph[paths[i][move[i]][0]][paths[i][move[i]][1]][1:]))
-                        if i < int(graph[paths[i][move[i]][0]][paths[i][move[i]][1]][1:]):
-                            paths[i].insert(move[i], starts[i])
-                            move[i] += 1
-                            times[i] -= 1
-                            continue
-                        else:
-                            print('i can go here', i , int(graph[paths[i][move[i]][0]][paths[i][move[i]][1]][1:]))
-                            gt = copy.deepcopy(graph)
-                            for ss in range(len(starts)):
-                                if ss != i:
-                                    gt[starts[ss][0]][starts[ss][1]] = 0
-                                    gt[goals[ss][0]][goals[ss][1]] = 0
-                            gt[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
-                            paths[i][move[i]-1:] = copyOfTreeSearchBFS((row, col, times[i], fuels[i], gt, starts[i], goals[i]), 3)
-                            print('mot', paths[i])
-                            graph[starts[i][0]][starts[i][1]] = 0
-                            starts[i] = paths[i][move[i]]
-                            graph[starts[i][0]][starts[i][1]] = f'S{i}'
-                            times[i] -= 1
-                            fuels[i] -= 1
-                            move[i] += 1
-                            gt = copy.deepcopy(graph)
-                            for ss in range(len(starts)):
-                                if ss != i:
-                                    gt[starts[ss][0]][starts[ss][1]] = 0
-                                    gt[goals[ss][0]][goals[ss][1]] = 0
-                            paths[i][move[i]-1:] = copyOfTreeSearchBFS((row, col, times[i], fuels[i], gt, starts[i], goals[i]), 3)
-                            print('hai', paths[i])
-                            continue
-                    elif graph[paths[i][move[i]][0]][paths[i][move[i]][1]][0] == 'G':
-                        if i == int(graph[paths[i][move[i]][0]][paths[i][move[i]][1]][1:]):
-                            if i == 0:
-                                return paths, goalss
-                            else:
-                                #generate new goals: gn
-                                rn = random.randint(0, row - 1)
-                                cn = random.randint(0, col - 1)
-                                while graph[rn][cn] != 0:
-                                    rn = random.randint(0, row - 1)
-                                    cn = random.randint(0, col - 1)
-                                #generate new goals: gn
-                                graph[goals[i][0]][goals[i][1]] = 0
-                                goals[i] = (rn, cn)
-                                graph[goals[i][0]][goals[i][1]] = f'G{i}'
-                                goalss[i].append((rn, cn))
-                                gt = copy.deepcopy(graph)
-                                for ss in range(len(starts)):
-                                    if ss != i:
-                                        gt[starts[ss][0]][starts[ss][1]] = 0
-                                        gt[goals[ss][0]][goals[ss][1]] = 0
-                                paths[i] += copyOfTreeSearchBFS((row, col, times[i], fuels[i], gt, starts[i], goals[i]), 3)
-                        else:
-                            lost_place.append((graph[paths[i][move[i]][0]][paths[i][move[i]][1]], paths[i][move[i]]))
-                else:
-                    wt[i] += graph[paths[i][move[i]][0]][paths[i][move[i]][1]]
-                    for _ in range(graph[paths[i][move[i]][0]][paths[i][move[i]][1]]):
-                        paths[i].insert(move[i], paths[i][move[i]])
-                    if graph[paths[i][move[i]][0]][paths[i][move[i]][1]] > 0:
-                        lost_place.append((graph[paths[i][move[i]][0]][paths[i][move[i]][1]], paths[i][move[i]]))
-            else:
-                wt[i] -= 1
-                times[i] -= 1
+
+            # if start i dont move, skip
+            if (paths[i][move[i]][0], paths[i][move[i]][1]) == (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]):
                 move[i] += 1
                 continue
-            graph[starts[i][0]][starts[i][1]] = 0
-            starts[i] = paths[i][move[i]]
-            graph[starts[i][0]][starts[i][1]] = f'S{i}'
-            times[i] -= 1
-            fuels[i] -= 1
-            move[i] += 1
 
-    return paths, goalss
-    
-    
+            # get list of current location of all starts and goals
+            current_starts = [(paths[j][move[j] - 1][0], paths[j][move[j] - 1][1]) for j in range(len(starts))]
+            current_goals = [goal_list[j][-1] for j in range(len(goals))]
+            # if next move of start i collide order start
+            if (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
+                collide_idx = current_starts.index((paths[i][move[i]][0], paths[i][move[i]][1]))
+                if i < collide_idx:
+                    paths[i].insert(move[i], paths[i][move[i] - 1])
+                    for j in range(move[i], len(paths[i])):
+                        p1, p2, p3, p4 = paths[i][j]
+                        paths[i][j] = (p1, p2, p3 + 1, p4)
+                    move[i] += 1
+                else:
+                    graph_temp = copy.deepcopy(empty_graph)
+                    graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                    graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                    while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
+                        graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
+                        paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    move[i] += 1
+                    graph_temp = copy.deepcopy(empty_graph)
+                    graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                    graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    paths[i] = expand_path(paths[i])
+                continue
+
+            # if start i got to goal
+            if (paths[i][move[i]][0], paths[i][move[i]][1]) == current_goals[i]:
+                if i == 0:
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                else:
+                    move[i] += 1
+                    #generate new goal
+                    r = random.randint(0, row - 1)
+                    c = random.randint(0, col - 1)
+                    while empty_graph[r][c] != 0 or (r, c) in current_starts or (r, c) in current_goals:
+                        r = random.randint(0, row - 1)
+                        c = random.randint(0, col - 1)
+                    goal_list[i].append((r, c))
+                    current_goals[i] = (r, c)
+                    graph_temp = copy.deepcopy(empty_graph)
+                    graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                    graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    paths[i] = expand_path(paths[i])
+                    continue
+            move[i] += 1
 
 
 # MAIN
-#p, g = whatEverItIs(PROBLEM, STARTS, GOALS)
-#for i in range(len(p)):
-    #print(p[i])
-#for i in range(len(p)):
-    #print(g[i])
-# print(TreeSearchBFS(PROBLEM, 3))
+# paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
+# for i in range(len(paths)):
+#     print(paths[i])
+# print('goals', goals)
