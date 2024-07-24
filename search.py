@@ -30,10 +30,10 @@ def read_file(filename):
                         goals.insert(int(graph[i][j][1:]), (i, j))
     return row, col, time, fuel, graph, starts, goals
 
-# ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
-# START = STARTS[0]
-# GOAL = GOALS[0]
-# PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
+#ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+#START = STARTS[0]
+#GOAL = GOALS[0]
+#PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
 
 # MANHATTAN DISTANCE FOR CALCULATING HEURISTIC VALUE:
 def manhattan(start, end):
@@ -204,7 +204,7 @@ def A_star_level_3(problem, level=1):
 
 # LEVEL 4 - LET KIEN COOK
 def copyOfA_star_level_3(problem, level=1):
-    row, col, time, fuel, graph, start, end = problem
+    row, col, time, fuel, fuel0, graph, start, end = problem
     x, y = start
     visited = {} 
     visited[(x, y, time, fuel)] = (x, y, time, fuel)
@@ -232,23 +232,15 @@ def copyOfA_star_level_3(problem, level=1):
         for i in range(4):
             neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
             if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
-                temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-                if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
-                    min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
-                    path = temp
                 continue
             if graph[neighborX][neighborY] != -1 and (neighborX, neighborY):
                 newCost = curCost + 1
                 newTime = curTime - 1
                 newFuel = curFuel - 1
                 if (neighborX, neighborY, newTime, newFuel) in path_cost and path_cost[(neighborX, neighborY, newTime, newFuel)] <= newCost:
-                    temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-                    if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
-                        min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
-                        path = temp
                     continue
                 if level == 3 and type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
-                    newFuel = fuel
+                    newFuel = fuel0
                     newTime -= int(graph[neighborX][neighborY][1:]) 
                 if level >= 2 and type(graph[neighborX][neighborY]) == type(1):
                     newTime -= int(graph[neighborX][neighborY])
@@ -294,7 +286,7 @@ def Level4MultiAgent(problem, starts, goals):
         graph_temp[starts[s][0]][starts[s][1]] = 'S'
         graph_temp[goals[s][0]][goals[s][1]] = 'G'
         # first find an optimized path for each start
-        paths[s] = copyOfA_star_level_3((row, col, time, fuel, graph_temp, starts[s], goals[s]), 3)
+        paths[s] = copyOfA_star_level_3((row, col, time, fuel, fuel, graph_temp, starts[s], goals[s]), 3)
         paths[s] = expand_path(paths[s])
 
     # if there is no possible path from S to G, return -1
@@ -337,12 +329,12 @@ def Level4MultiAgent(problem, starts, goals):
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
                     while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
                         graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
-                        paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                        paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
                     move[i] += 1
                     graph_temp = copy.deepcopy(empty_graph)
                     graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
                     paths[i] = expand_path(paths[i])
                 continue
 
@@ -363,14 +355,15 @@ def Level4MultiAgent(problem, starts, goals):
                     graph_temp = copy.deepcopy(empty_graph)
                     graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
                     paths[i] = expand_path(paths[i])
                     continue
             move[i] += 1
 
 
 # MAIN
-# paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
-# for i in range(len(paths)):
-#     print(paths[i])
-# print('goals', goals)
+#paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
+#print('goals', goals)
+#for i in range(len(paths)):
+    #print(f'path S{i}', paths[i])
+
