@@ -80,7 +80,7 @@ class Game:
             return(self.color[type[0]])
     def getTexture(self): 
         return "fuel.png"
-    def drawCell(self, cell: pg.Rect, content:str, size:int , pos:tuple, color:str, background:str, textalign:str = "center"):
+    def drawCell(self, cell: pg.Rect, content:str, size:int , pos:tuple, color, background:str, textalign:str = "center"):
         cell.topleft = pos
         pg.draw.rect(self.screen, background, cell)
         if (content != "" and content != "0" and content != "-1"):
@@ -126,6 +126,7 @@ class Game:
         draw = False
         index = 0
         pathlen = len(path)
+        cellColor = (0, 255, 0)
         while run:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -141,9 +142,9 @@ class Game:
                 self.resetBoard()
             try:
                 step = path[index]
-                cellColor = "#00FF00"
+                
                 self.drawCell(cell, str(self.GRAPH[step[0]][step[1]]), 24, (step[1]*(self.cellW + self.gut) + offsetX, step[0]*(self.cellH + self.gut) + offsetY) , "#000000", cellColor)
-                self.clock.tick(24)
+                self.clock.tick(12)
                 pg.display.flip()
                 pg.time.delay(100)
                 index+=1
@@ -161,9 +162,12 @@ class Game:
         startindex = 0 #regulate each starts I
         pathslen = len(path)
         cellColor = (0, 255, 0)
+        count = 0
         for goallist in goals:
             for goal in goallist:
-                self.GRAPH[goal[0]][goal[1]] = "G"
+                if str(self.GRAPH[goal[0]][goal[1]])[0] != "G":
+                    self.GRAPH[goal[0]][goal[1]] = f"GX{count}" # Added Goal\
+                count += 1
         print(self.GRAPH)
         
         while run:
@@ -184,9 +188,9 @@ class Game:
             try:
                 step = path[startindex][stepindex]
                 # print(step)
-                cellColor = "#00FF00"
+
                 self.drawCell(cell, str(self.GRAPH[step[0]][step[1]]), 24, (step[1]*(self.cellW + self.gut) + offsetX, step[0]*(self.cellH + self.gut) + offsetY) , "#000000", cellColor)
-                self.clock.tick(24)
+                self.clock.tick(12)
                 pg.display.flip()
                 pg.time.delay(100)
                 if (stepindex < len(path[startindex]) - 1):
@@ -195,9 +199,12 @@ class Game:
                 else:
                     startindex+=1
                     stepindex = 0
+                    cellColor = [randint(0, 220), randint(0, 220),randint(0, 220)]
             except:
+                draw = True
                 continue
             draw = True
+
         return
     def showMenu(self):
         for i in range(4):
