@@ -56,7 +56,7 @@ class Game:
         self.gut = 5
         self.algorithm = {1: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*") ]
                           , 2: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*"), ]
-                          , 3: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*"), ]
+                          , 3: [(A_star_level_3, "Super A* 3"), ]
                           , 4:[(Level4MultiAgent, "Level 4 Search")]}
         self.color = {-1:"#111111","S": "#00CC00", 1: "#0000FF", 0: "#FFFFFF", "G": "#CC0000", "F": "#FFFF00"}
         self.cellW = min(60, self.size[1]//self.ROW ) - self.gut *2
@@ -158,20 +158,22 @@ class Game:
         run = True
         draw = False
         copyGraph = copy.deepcopy(self.GRAPH)
-        stepindex = 0 #Regulate step in each path
+        stepindex = [0]*len(path) #Regulate step in each path
         startindex = 0 #regulate each starts I
         oldstep = dict()
         cellColor = [[211,249,168], [58,190,232], [233,125,50]]
         oldcellColor = [[channel - 50 for channel in color] for color in cellColor]
         mode = {0: True, 1: True} #0 is Manual, #1 is Auto
+
+        #Add new goal to board
         count = 0
         for goallist in goals:
             for goal in goallist:
                 if str(self.GRAPH[goal[0]][goal[1]])[0] != "G":
                     self.GRAPH[goal[0]][goal[1]] = f"GX{count}" # Added Goal\
                 count += 1
-        # print(self.GRAPH)
-        
+        print(path)
+        #Children loop
         while run:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -196,11 +198,9 @@ class Game:
             # pop = False
             if (startindex == len(path)): # Pass the last start
                 startindex = 0
-                stepindex += 1
-                pop = True
                 mode[0] = False
             try:    
-                step = path[startindex][stepindex]
+                step = path[startindex][stepindex[startindex]]
                 # print(step)
                 if (startindex in oldstep):
                     if (oldstep[startindex] != step):
@@ -212,8 +212,10 @@ class Game:
                 pg.time.delay(100)
                 if (mode[0] or mode[1]):
                     oldstep[startindex] = step
+                    stepindex[startindex] += 1
                     startindex += 1 #Turn for next start
             except:
+                startindex = 0
                 continue
             draw = True
         self.GRAPH = copy.deepcopy(copyGraph)
