@@ -80,9 +80,9 @@ class Game:
             return(self.color[type[0]])
     def getTexture(self): 
         return "fuel.png"
-    def drawCell(self, cell: pg.Rect, content:str, size:int , pos:tuple, color, background:str, textalign:str = "center"):
+    def drawCell(self, cell: pg.Rect, content:str, size:int , pos:tuple, color, background:str, textalign:str = "center", width = 0):
         cell.topleft = pos
-        pg.draw.rect(self.screen, background, cell)
+        pg.draw.rect(self.screen, background, cell, width)
         if (content != "" and content != "0" and content != "-1"):
             font = pg.font.Font("Oswald-Regular.ttf",size)
             text = font.render(content, True, color)
@@ -102,13 +102,13 @@ class Game:
     #         rect.topleft = pos
     #     self.drawCell(cell, pos, background)
     #     self.screen.blit(text, rect)
-    def drawText(self, content:str, size:int, pos:tuple, color, background:str=""):
+    def drawText(self, content:str, size:int, pos:tuple, color, background:str="", width = 0):
         font = pg.font.Font("Oswald-Regular.ttf",size)
         text = font.render(content, True, color)
         rect = text.get_rect()
         rect.topleft = pos
         if(background != ""):
-            pg.draw.rect(self.screen, background, rect)
+            pg.draw.rect(self.screen, background, rect, width)
         self.screen.blit(text, rect)
     def resetBoard(self):
         offsetX, offsetY = self.getGraphOffset()
@@ -157,18 +157,20 @@ class Game:
         cell = pg.Rect(0, 0, self.cellW, self.cellH)
         run = True
         draw = False
+        copyGraph = copy.deepcopy(self.GRAPH)
         stepindex = 0 #Regulate step in each path
-        pathindex = 0 #Regulate path in each paths
         startindex = 0 #regulate each starts I
-        pathslen = len(path)
-        cellColor = (0, 255, 0)
+        oldstep = dict()
+        cellColor = [[211,249,168], [58,190,232], [233,125,50]]
+        oldcellColor = [[channel - 50 for channel in color] for color in cellColor]
+        mode = {0: True, 1: True} #0 is Manual, #1 is Auto
         count = 0
         for goallist in goals:
             for goal in goallist:
                 if str(self.GRAPH[goal[0]][goal[1]])[0] != "G":
                     self.GRAPH[goal[0]][goal[1]] = f"GX{count}" # Added Goal\
                 count += 1
-        print(self.GRAPH)
+        # print(self.GRAPH)
         
         while run:
             for event in pg.event.get():
@@ -177,34 +179,44 @@ class Game:
                     sys.exit()
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_q:
-                        return
+                        run = False
+                        continue
                     if event.key == pg.K_r:
                         draw = False
                         stepindex = 0 #Regulate step in each path
                         pathindex = 0 #Regulate path in each paths
                         startindex = 0 #regulate each starts I
+                        oldstep.clear()
+                    if event.key == pg.K_n:
+                        mode[0] = True
+                    if event.key == pg.K_a:
+                        mode[1] = not mode[1]
             if draw == False:
                 self.resetBoard()
-            try:
+            # pop = False
+            if (startindex == len(path)): # Pass the last start
+                startindex = 0
+                stepindex += 1
+                pop = True
+                mode[0] = False
+            try:    
                 step = path[startindex][stepindex]
                 # print(step)
-
-                self.drawCell(cell, str(self.GRAPH[step[0]][step[1]]), 24, (step[1]*(self.cellW + self.gut) + offsetX, step[0]*(self.cellH + self.gut) + offsetY) , "#000000", cellColor)
-                self.clock.tick(12)
+                if (startindex in oldstep):
+                    if (oldstep[startindex] != step):
+                        temp = oldstep[startindex]
+                        self.drawCell(cell, str(self.GRAPH[temp[0]][temp[1]]), 24, (temp[1]*(self.cellW + self.gut) + offsetX, temp[0]*(self.cellH + self.gut) + offsetY) , "#000000", oldcellColor[startindex])
+                self.drawCell(cell, str(self.GRAPH[step[0]][step[1]]), 24, (step[1]*(self.cellW + self.gut) + offsetX, step[0]*(self.cellH + self.gut) + offsetY) , "#000000", cellColor[startindex])
+                self.clock.tick(10)
                 pg.display.flip()
                 pg.time.delay(100)
-                if (stepindex < len(path[startindex]) - 1):
-                    stepindex+=1
-                    print(stepindex)
-                else:
-                    startindex+=1
-                    stepindex = 0
-                    cellColor = [randint(0, 220), randint(0, 220),randint(0, 220)]
+                if (mode[0] or mode[1]):
+                    oldstep[startindex] = step
+                    startindex += 1 #Turn for next start
             except:
-                draw = True
                 continue
             draw = True
-
+        self.GRAPH = copy.deepcopy(copyGraph)
         return
     def showMenu(self):
         for i in range(4):
@@ -242,9 +254,6 @@ class Game:
                     self.printAlgorithmInfo(self.algorithm[4][0][1], level)
                     paths, goals = self.algorithm[4][0][0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL), self.STARTS, self.GOALS)
                     self.drawSolutionForLv4(paths, goals)
-                    print("Debug")
-                    print(paths)
-                    print(goals)
                     level = 0
             pg.display.flip()
             self.clock.tick(60)

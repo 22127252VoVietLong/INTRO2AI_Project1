@@ -378,4 +378,3 @@ def Level4MultiAgent(problem, starts, goals):
 #print('goals', goals)
 #for i in range(len(paths)):
     #print(f'path S{i}', paths[i])
-
