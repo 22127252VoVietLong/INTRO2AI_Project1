@@ -30,10 +30,10 @@ def read_file(filename):
                         goals.insert(int(graph[i][j][1:]), (i, j))
     return row, col, time, fuel, graph, starts, goals
 
-#ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
-#START = STARTS[0]
-#GOAL = GOALS[0]
-#PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
+ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+START = STARTS[0]
+GOAL = GOALS[0]
+PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
 
 # MANHATTAN DISTANCE FOR CALCULATING HEURISTIC VALUE:
 def manhattan(start, end):
@@ -443,9 +443,9 @@ def Level4MultiAgent(problem, starts, goals):
 
 
 # MAIN
-#paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
-#print('goals', goals)
-#for i in range(len(paths)):
-    #print(f'path S{i}', paths[i])
+paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
+print('goals', goals)
+for i in range(len(paths)):
+    print(f'path S{i}', paths[i])
 #row, col, time, fuel, graph, start, goal = PROBLEM
 #print(A_star_level_4((row, col, time, fuel, fuel, graph, start, goal)))
