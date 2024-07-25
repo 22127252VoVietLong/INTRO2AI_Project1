@@ -302,6 +302,12 @@ def Level4MultiAgent(problem, starts, goals):
             # time and fuel check
             if paths[i][move[i] - 1][2] <= 0 or paths[i][move[i] - 1][3] <= 0:
                 if i == 0:
+                    len_path = len(paths[i])
+                    for pa in range(1, len(starts)):
+                        if len(paths[pa]) >= len_path:
+                            exceed = len(paths[pa]) - len_path + 1
+                            for _ in range(exceed):
+                                paths[pa].pop()
                     return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
                     continue
@@ -341,6 +347,12 @@ def Level4MultiAgent(problem, starts, goals):
             # if start i got to goal
             if (paths[i][move[i]][0], paths[i][move[i]][1]) == current_goals[i]:
                 if i == 0:
+                    len_path = len(paths[i])
+                    for pa in range(1, len(starts)):
+                        if len(paths[pa]) >= len_path:
+                            exceed = len(paths[pa]) - len_path + 1
+                            for _ in range(exceed):
+                                paths[pa].pop()
                     return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
                     move[i] += 1
