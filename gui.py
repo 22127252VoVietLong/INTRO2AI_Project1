@@ -55,7 +55,7 @@ class Game:
         self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL, self.STARTS, self.GOALS = problem
         self.gut = 5
         self.algorithm = {1: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*") ]
-                          , 2: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*"), ]
+                          , 2: [(A_star_level_2, "Super A* 2")]
                           , 3: [(A_star_level_3, "Super A* 3"), ]
                           , 4:[(Level4MultiAgent, "Level 4 Search")]}
         self.color = {-1:"#111111","S": "#00CC00", 1: "#0000FF", 0: "#FFFFFF", "G": "#CC0000", "F": "#FFFF00"}
@@ -247,7 +247,7 @@ class Game:
                     self.screen.fill("#CCCCCC")
                     for algorithm in self.algorithm[level]:
                         self.printAlgorithmInfo(algorithm[1], level)
-                        path = algorithm[0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL), level)
+                        path = algorithm[0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL))
                         self.drawSolutionPath(path)
                         pg.time.delay(300)
                     level = 0

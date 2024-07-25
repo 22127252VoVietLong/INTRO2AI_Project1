@@ -49,9 +49,9 @@ def trace(visited, start, end):
     path.reverse()
     return path
 
-# LEVEL 1 -> 3:
-def BFS(problem, level=1):
-    row, col, time, fuel, graph, start, end = problem
+# LEVEL 1:
+def BFS(problem):
+    row, col, _, _, graph, start, end = problem
     visited = {} 
     visited[start] = start   
     queue = [start]
@@ -68,8 +68,8 @@ def BFS(problem, level=1):
                 queue.append((neighborX, neighborY))
     return [-1]
 
-def DFS(problem, level=1):
-    row, col, time, fuel, graph, start, end = problem
+def DFS(problem):
+    row, col, _, _, graph, start, end = problem
     visited = {} 
     visited[start] = start   
     stack = [start]
@@ -86,7 +86,7 @@ def DFS(problem, level=1):
                 stack.append((neighborX, neighborY))
     return [-1]
 
-def UCS(problem, level=1):
+def UCS(problem):
     row, col, _, _, graph, start, end = problem
     visited = {} 
     visited[start] = start   
@@ -112,8 +112,8 @@ def UCS(problem, level=1):
                 heappush(frontier, (new_cost, neighborX, neighborY))
     return [-1]         
 
-def GBFS(problem, level=1):
-    row, col, time, fuel, graph, start, end = problem
+def GBFS(problem):
+    row, col, _, _, graph, start, end = problem
     visited = {} 
     visited[start] = start   
     x, y = start
@@ -133,7 +133,7 @@ def GBFS(problem, level=1):
     return [-1]
         
 
-def A_star(problem, level=1):
+def A_star(problem):
     row, col, _, _, graph, start, end = problem
     visited = {} 
     visited[start] = start   
@@ -163,8 +163,42 @@ def A_star(problem, level=1):
                 heappush(frontier, (new_cost + manhattan((neighborX, neighborY), end), neighborX, neighborY))
     return [-1]                    
 
-# LEVEL 2, 3 ONLY
-def A_star_level_3(problem, level=1):
+# LEVEL 2:
+def A_star_level_2(problem):
+    row, col, time, _, graph, start, end = problem
+    x, y = start
+    visited = {} 
+    visited[(x, y, time)] = (x, y, time)
+    path_cost = {(x, y, time): 0}
+    frontier = [(manhattan(start, end), time, x, y)]
+    while frontier:
+        curCost, curTime, curR, curC = heappop(frontier)
+        curCost = curCost - manhattan((curR, curC), end)
+        if (curR, curC) == end:
+            temp = trace(visited, (x, y, time), (curR, curC, curTime))
+            path = [(item[0], item[1]) for item in temp]
+            return path
+        if curTime <= 0:
+            continue
+        for i in range(4):
+            neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
+            if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
+                continue
+            if graph[neighborX][neighborY] != -1 and (neighborX, neighborY):
+                newCost = curCost + 1
+                newTime = curTime - 1
+                if (neighborX, neighborY, newTime) in path_cost and path_cost[(neighborX, neighborY, newTime)] <= newCost:
+                    continue
+                if type(graph[neighborX][neighborY]) == type(1):
+                    newTime -= int(graph[neighborX][neighborY])
+                visited[(neighborX, neighborY, newTime)] = (curR, curC, curTime)
+                path_cost[(neighborX, neighborY, newTime)] = newCost
+                heappush(frontier, (newCost + manhattan((neighborX, neighborY), end), newTime, neighborX, neighborY))
+    return [-1]
+
+
+# LEVEL 3:
+def A_star_level_3(problem):
     row, col, time, fuel, graph, start, end = problem
     x, y = start
     visited = {} 
@@ -178,9 +212,9 @@ def A_star_level_3(problem, level=1):
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
             path = [(item[0], item[1]) for item in temp]
             return path
-        if level == 3 and curFuel <= 0:
+        if curFuel <= 0:
             continue
-        if level >= 2 and curTime <= 0:
+        if curTime <= 0:
             continue
         for i in range(4):
             neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
@@ -192,10 +226,10 @@ def A_star_level_3(problem, level=1):
                 newFuel = curFuel - 1
                 if (neighborX, neighborY, newTime, newFuel) in path_cost and path_cost[(neighborX, neighborY, newTime, newFuel)] <= newCost:
                     continue
-                if level == 3 and type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
+                if type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
                     newFuel = fuel
                     newTime -= int(graph[neighborX][neighborY][1:]) 
-                if level >= 2 and type(graph[neighborX][neighborY]) == type(1):
+                if type(graph[neighborX][neighborY]) == type(1):
                     newTime -= int(graph[neighborX][neighborY])
                 visited[(neighborX, neighborY, newTime, newFuel)] = (curR, curC, curTime, curFuel)
                 path_cost[(neighborX, neighborY, newTime, newFuel)] = newCost
@@ -203,7 +237,7 @@ def A_star_level_3(problem, level=1):
     return [-1]
 
 # LEVEL 4 - LET KIEN COOK
-def copyOfA_star_level_3(problem, level=1):
+def A_star_level_4(problem, level=1):
     row, col, time, fuel, fuel0, graph, start, end = problem
     x, y = start
     visited = {} 
@@ -286,7 +320,7 @@ def Level4MultiAgent(problem, starts, goals):
         graph_temp[starts[s][0]][starts[s][1]] = 'S'
         graph_temp[goals[s][0]][goals[s][1]] = 'G'
         # first find an optimized path for each start
-        paths[s] = copyOfA_star_level_3((row, col, time, fuel, fuel, graph_temp, starts[s], goals[s]), 3)
+        paths[s] = A_star_level_4((row, col, time, fuel, fuel, graph_temp, starts[s], goals[s]), 3)
         paths[s] = expand_path(paths[s])
 
     # if there is no possible path from S to G, return -1
@@ -335,12 +369,12 @@ def Level4MultiAgent(problem, starts, goals):
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
                     while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
                         graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
-                        paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                        paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
                     move[i] += 1
                     graph_temp = copy.deepcopy(empty_graph)
                     graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
                     paths[i] = expand_path(paths[i])
                 continue
 
@@ -367,7 +401,7 @@ def Level4MultiAgent(problem, starts, goals):
                     graph_temp = copy.deepcopy(empty_graph)
                     graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                    paths[i][move[i] - 1:] = copyOfA_star_level_3((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
+                    paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]), 3)
                     paths[i] = expand_path(paths[i])
                     continue
             move[i] += 1
