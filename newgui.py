@@ -48,14 +48,13 @@ class Simulator:
         self.HUDFrame = pg.image.load("img/background/hud.png")
         
         #Problem material
-        self.color = {-1:"#111111","S": "#00CC00", 1: "#0000FF", 0: "#FFFFFF", "G": "#CC0000", "F": "#FFFF00"}
         self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL, self.STARTS, self.GOALS = problem
         self.gut = 5
         self.algorithm = {1: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*") ]
                           , 2: [(A_star_level_2, "Super A* 2"), ]
                           , 3: [(A_star_level_3, "Super A* 3"), ]
                           , 4:[(Level4MultiAgent, "Level 4 Search")]}
-        self.color = {-1:"#111111","S": "#00CC00", 1: "#0000FF", 0: "#FFFFFF", "G": "#CC0000", "F": "#FFFF00"}
+        self.color = {-1:(1,1,1),"S": (0, 241, 29), 1:(239, 127, 0), 0: (255,255,255)  , "G": (255, 59, 35), "F": (0, 121, 255)}
         self.cellW = min(min(60, self.HUD["canvas"].size[0]//self.ROW ) - self.gut *2, min(60, self.HUD["canvas"].size[1]//self.COL ) - self.gut *2)
         self.cellH = self.cellW
         self.boardSize = (int(self.cellW * self.COL + self.gut*(self.COL)), int(self.cellW * self.ROW + self.gut*(self.ROW)))
@@ -75,7 +74,7 @@ class Simulator:
         pg.draw.rect(self.window, background, cell, width)
         self.drawCellContent(content, pos)
 
-    def drawPassedCellLine(self, content, startPos, endPos, color, width = 10):
+    def drawPassedCellLine(self, startPos, endPos, color, width = 10):
         offsetX, offsetY = self.getBoardOffsetOnCanvas()
         startPixel = (startPos[1]*(self.cellW + self.gut) +  offsetX + self.cellW//2, startPos[0]*(self.cellH + self.gut) + offsetY  + self.cellH//2)
         endPixel = (endPos[1]*(self.cellW + self.gut) +  offsetX +  self.cellW//2, endPos[0]*(self.cellH + self.gut) + offsetY  + self.cellH//2)
@@ -145,7 +144,10 @@ class Simulator:
         run = True
         draw = False
         index = 0
-        cellColor = (0, 255, 0)
+        cellColor = (103, 209, 82)
+        oldColor = [i - 50 for i in cellColor]
+        oldstep = []
+        mode = {0: False, 1:True}
         while run:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -157,15 +159,27 @@ class Simulator:
                     if event.key == pg.K_r:
                         draw = False
                         index = 0
+                        oldstep.clear()
+                    if event.key == pg.K_n:
+                        mode[0] = True
+                    if event.key == pg.K_a:
+                        mode[1] = not mode[1]
             if (path[0] != -1):
                 if draw == False:
+                    pg.draw.rect(self.window, "#CCCCCC", pg.Rect(210, 210, 780, 580))
                     self.resetBoard()
-                try:
-                    step = path[index]
-                    self.drawBoardCell(str(self.GRAPH[step[0]][step[1]]),  step , "#000000", cellColor)
+            try:
+                step = path[index]
+                if len(oldstep) > 0 and oldstep[-1] != step:
+                    temp = oldstep.pop()
+                    self.drawPassedCellLine(temp, step, oldColor)
+                self.drawCurrentCursor( step , cellColor)
+                oldstep.append(step)
+                if(mode[0] or mode[1]):
                     index+=1
-                except:
-                    continue
+                    mode[0] = False
+            except:
+                continue
             
             self.clock.tick(12)
             pg.display.flip()
@@ -227,6 +241,7 @@ class Simulator:
                     if event.key == pg.K_a:
                         mode[1] = not mode[1]
             if draw == False:
+                pg.draw.rect(self.window, "#CCCCCC", pg.Rect(210, 210, 780, 580))
                 self.resetBoard()
             # pop = False
             if (startindex == len(path)): # Pass the last start
