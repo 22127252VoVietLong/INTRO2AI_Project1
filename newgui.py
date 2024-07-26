@@ -216,7 +216,7 @@ class Simulator:
             for goal in goallist:
                 if str(self.GRAPH[goal[0]][goal[1]])[0] != "G":
                     self.GRAPH[goal[0]][goal[1]] = f"GX{count}" # Added Goal\
-                count += 1
+                    count += 1
         print(path)
         #Children loop
         debugDraw = True
