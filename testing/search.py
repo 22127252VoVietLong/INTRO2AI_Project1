@@ -423,6 +423,8 @@ def Level4MultiAgent(problem, starts, goals):
             # if start i got to goal
             if (paths[i][move[i]][0], paths[i][move[i]][1]) == current_goals[i]:
                 if i == 0:
+                    for ex in range(move[i] + 1, len(paths[i])):
+                        paths[i].pop()
                     len_path = len(paths[i])
                     for pa in range(1, len(starts)):
                         if len(paths[pa]) >= len_path:
