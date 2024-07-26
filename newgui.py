@@ -48,13 +48,13 @@ class Simulator:
         self.HUDFrame = pg.image.load("img/background/hud.png")
         
         #Problem material
+        self.color = {-1:(1,1,1),"S": (0, 241, 29), 1:(239, 127, 0), 0: (255,255,255)  , "G": (255, 59, 35), "F": (0, 121, 255)}
         self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL, self.STARTS, self.GOALS = problem
         self.gut = 5
         self.algorithm = {1: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*") ]
                           , 2: [(A_star_level_2, "Super A* 2"), ]
                           , 3: [(A_star_level_3, "Super A* 3"), ]
                           , 4:[(Level4MultiAgent, "Level 4 Search")]}
-        self.color = {-1:(1,1,1),"S": (0, 241, 29), 1:(239, 127, 0), 0: (255,255,255)  , "G": (255, 59, 35), "F": (0, 121, 255)}
         self.cellW = min(min(60, self.HUD["canvas"].size[0]//self.ROW ) - self.gut *2, min(60, self.HUD["canvas"].size[1]//self.COL ) - self.gut *2)
         self.cellH = self.cellW
         self.boardSize = (int(self.cellW * self.COL + self.gut*(self.COL)), int(self.cellW * self.ROW + self.gut*(self.ROW)))
@@ -145,7 +145,7 @@ class Simulator:
         draw = False
         index = 0
         cellColor = (103, 209, 82)
-        oldColor = [i - 50 for i in cellColor]
+        oldColor = tuple([i - 50 for i in cellColor])
         oldstep = []
         mode = {0: False, 1:True}
         while run:
@@ -181,12 +181,11 @@ class Simulator:
             except:
                 continue
             
-            self.clock.tick(12)
+            self.clock.tick(10)
             pg.display.flip()
             pg.time.delay(100)
             draw = True
         return
-    
     # def drawCurrentNode(self, content, pos:tuple, color, background:str, width = 0):
 
     
@@ -198,17 +197,17 @@ class Simulator:
         stepindex = [0]*len(path) #Regulate step in each path
         startindex = 0 #regulate each starts I
         oldstep = dict()
-        cellColor = [[208, 189, 127],
-                    [138, 215, 159],
-                    [241, 191, 135],
-                    [167, 216, 132],
-                    [206, 216, 173],
-                    [220, 232, 180],
-                    [174, 182, 225],
-                    [216, 209, 131],
-                    [129, 223, 132],
-                    [237, 198, 158]]
-        oldcellColor = [[channel - 50 for channel in color] for color in cellColor]
+        cellColor = [(208, 189, 127),
+                    (138, 215, 159),
+                    (241, 191, 135),
+                    (167, 216, 132),
+                    (206, 216, 173),
+                    (220, 232, 180),
+                    (174, 182, 225),
+                    (216, 209, 131),
+                    (129, 223, 132),
+                    (237, 198, 158)]
+        oldcellColor = [tuple([channel - 50 for channel in color]) for color in cellColor]
         mode = {0: True, 1: True} #0 is Manual, #1 is Auto
         print(path)
         #Add new goal to board
@@ -249,19 +248,19 @@ class Simulator:
                 mode[0] = False
             try:    
                 step = path[startindex][stepindex[startindex]]
-                # print(step)
+                print(step)
                 # if (startindex in oldstep):
                 #     if (oldstep[startindex] != step):
                 #         temp = oldstep[startindex]
                 #         self.drawPassedCellLine(str(self.GRAPH[temp[0]][temp[1]]), temp, step, oldcellColor[startindex])
                         # self.drawBoardCell(str(self.GRAPH[temp[0]][temp[1]]), temp, "#000000", oldcellColor[startindex])
-                # self.drawBoardCell(str(self.GRAPH[step[0]][step[1]]), step , "#000000", cellColor[startindex])
-                self.drawCurrentCursor(step, cellColor[startindex])
                 if (startindex in oldstep):
                     if (oldstep[startindex] != step):
                         temp = oldstep[startindex]
+                        print(temp)
                         # self.drawBoardCell(str(self.GRAPH[temp[0]][temp[1]]), temp , "#000000", self.getColor(str(self.GRAPH[temp[0]][temp[1]])))
-                        self.drawPassedCellLine(str(self.GRAPH[temp[0]][temp[1]]), temp, step, oldcellColor[startindex])
+                        self.drawPassedCellLine(temp, step, oldcellColor[startindex])
+                self.drawCurrentCursor( step , cellColor[startindex])
                 self.clock.tick(10)
                 pg.display.flip()
                 pg.time.delay(100)
