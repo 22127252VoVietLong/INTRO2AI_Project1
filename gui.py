@@ -55,7 +55,7 @@ class Game:
         self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL, self.STARTS, self.GOALS = problem
         self.gut = 5
         self.algorithm = {1: [(BFS, "BFS") , (DFS, "DFS") , (UCS, "UCS"), (GBFS, "GBFS") , (A_star, "A*") ]
-                          , 2: [(A_star_level_2, "Super A* 2")]
+                          , 2: [(A_star_level_2, "Super A* 2"), ]
                           , 3: [(A_star_level_3, "Super A* 3"), ]
                           , 4:[(Level4MultiAgent, "Level 4 Search")]}
         self.color = {-1:"#111111","S": "#00CC00", 1: "#0000FF", 0: "#FFFFFF", "G": "#CC0000", "F": "#FFFF00"}
@@ -164,7 +164,7 @@ class Game:
         cellColor = [[211,249,168], [58,190,232], [233,125,50]]
         oldcellColor = [[channel - 50 for channel in color] for color in cellColor]
         mode = {0: True, 1: True} #0 is Manual, #1 is Auto
-
+        print(path)
         #Add new goal to board
         count = 0
         for goallist in goals:
@@ -174,6 +174,7 @@ class Game:
                 count += 1
         print(path)
         #Children loop
+        debugDraw = True
         while run:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -186,8 +187,8 @@ class Game:
                     if event.key == pg.K_r:
                         draw = False
                         stepindex = 0 #Regulate step in each path
-                        pathindex = 0 #Regulate path in each paths
                         startindex = 0 #regulate each starts I
+                        stepindex = [0] * len(path)
                         oldstep.clear()
                     if event.key == pg.K_n:
                         mode[0] = True
@@ -206,6 +207,9 @@ class Game:
                     if (oldstep[startindex] != step):
                         temp = oldstep[startindex]
                         self.drawCell(cell, str(self.GRAPH[temp[0]][temp[1]]), 24, (temp[1]*(self.cellW + self.gut) + offsetX, temp[0]*(self.cellH + self.gut) + offsetY) , "#000000", oldcellColor[startindex])
+                if debugDraw:
+                    print(f"Start: {startindex}, Step: {str(step)}")
+                    debugDraw = False
                 self.drawCell(cell, str(self.GRAPH[step[0]][step[1]]), 24, (step[1]*(self.cellW + self.gut) + offsetX, step[0]*(self.cellH + self.gut) + offsetY) , "#000000", cellColor[startindex])
                 self.clock.tick(10)
                 pg.display.flip()
@@ -214,8 +218,10 @@ class Game:
                     oldstep[startindex] = step
                     stepindex[startindex] += 1
                     startindex += 1 #Turn for next start
+                    debugDraw = True
             except:
-                startindex = 0
+                if startindex < len(path):
+                    startindex+=1
                 continue
             draw = True
         self.GRAPH = copy.deepcopy(copyGraph)
