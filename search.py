@@ -344,6 +344,8 @@ def Level4MultiAgent(problem, starts, goals):
         #print(paths[pa])
     # move tracker
     move = [1 for _ in range(len(starts))]
+    # blocked block
+    block = [[] for _ in range(len(starts))]
     
     # main loop
     while True:
@@ -361,14 +363,28 @@ def Level4MultiAgent(problem, starts, goals):
                 else:
                     continue
 
+            # get list of current location of all starts and goals
+            current_starts = [(paths[j][move[j] - 1][0], paths[j][move[j] - 1][1]) for j in range(len(starts))]
+            current_goals = [goal_list[j][-1] for j in range(len(goals))]
+
+            del_block = False
+            if block[i]:
+                for bl in range(len(block[i]) - 1, -1, -1):
+                    if block[i][bl] not in current_starts:
+                        del_block = True
+                        block[i].pop(bl)
+            if del_block:
+                graph_temp = copy.deepcopy(empty_graph)
+                graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
+                paths[i] = expand_path(paths[i])
+                    
             # if start i dont move, skip
             if (paths[i][move[i]][0], paths[i][move[i]][1]) == (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]):
                 move[i] += 1
                 continue
 
-            # get list of current location of all starts and goals
-            current_starts = [(paths[j][move[j] - 1][0], paths[j][move[j] - 1][1]) for j in range(len(starts))]
-            current_goals = [goal_list[j][-1] for j in range(len(goals))]
             # if next move of start i collide order start
             if (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
                 collide_idx = current_starts.index((paths[i][move[i]][0], paths[i][move[i]][1]))
@@ -383,20 +399,16 @@ def Level4MultiAgent(problem, starts, goals):
                     move[i] += 1
                     #print('wait', i, move[i], paths[i])
                 else:
-                    
                     graph_temp = copy.deepcopy(empty_graph)
                     graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
                     loo = 0
                     while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts and loo < 5:
+                        block[i].append((paths[i][move[i]][0], paths[i][move[i]][1]))
                         graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
                         paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
                         loo += 1
                     move[i] += 1
-                    graph_temp = copy.deepcopy(empty_graph)
-                    graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                    graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                    paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
                     paths[i] = expand_path(paths[i])
                     #print('dodge', i, move[i], paths[i])
                 #else:
