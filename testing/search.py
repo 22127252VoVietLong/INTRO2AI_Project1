@@ -13,8 +13,8 @@ def read_file(filename):
         for _ in range(row):
             temp = f.readline().split()
             graph.append(temp)
-        starts = [(-1, -1)]
-        goals = [(-1, -1)]
+        starts = [(-1, -1) for _ in range(int(row * col / 2))]
+        goals = [(-1, -1) for _ in range(int(row * col / 2))]
         for i in range(row):
             for j in range(col):
                 try:
@@ -25,9 +25,12 @@ def read_file(filename):
                     elif graph[i][j] == 'G':
                         goals[0] = (i, j)
                     elif graph[i][j][0] == 'S':
-                        starts.insert(int(graph[i][j][1:]), (i, j))
+                        starts[int(graph[i][j][1:])] = (i, j)
                     elif graph[i][j][0] == 'G':
-                        goals.insert(int(graph[i][j][1:]), (i, j))
+                        goals[int(graph[i][j][1:])] = (i, j)
+    while starts[-1] == (-1, -1):
+        starts.pop()
+        goals.pop()
     return row, col, time, fuel, graph, starts, goals
 
 ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
@@ -244,7 +247,7 @@ def A_star_level_4(problem):
     visited[(x, y, time, fuel)] = (x, y, time, fuel)
     path_cost = {(x, y, time, fuel): 0}
     frontier = [(manhattan(start, end), time, fuel, x, y)]
-    path = []
+    path = [(start[0], start[1], time, fuel), (start[0], start[1], time - 1, fuel)]
     min_heuristic = row * col
     while frontier:
         curCost, curTime, curFuel, curR, curC = heappop(frontier)
@@ -263,19 +266,15 @@ def A_star_level_4(problem):
                 min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
                 path = temp
             continue
-        for i in range(5):
+        for i in range(4):
             if i < 4:
                 neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
-            elif i == 4:
-                neighborX, neighborY = curR, curC
             if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
                 continue
             if graph[neighborX][neighborY] != -1 and (neighborX, neighborY):
                 newCost = curCost + 1
                 newTime = curTime - 1
                 newFuel = curFuel - 1
-                if i == 4:
-                    newFuel += 1
                 if (neighborX, neighborY, newTime, newFuel) in path_cost and path_cost[(neighborX, neighborY, newTime, newFuel)] <= newCost:
                     continue
                 if type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
@@ -298,6 +297,10 @@ def expand_path(path):
             p1, p2, p3, p4 = path[listi[t][0]]
             temp = (p1, p2, p3 + 1, p4)
             path.insert(listi[t][0], temp)
+    while path[-1][2] != 0 and path[-1][3] != 0:
+        p1, p2, p3, p4 = path[-1]
+        temp = (p1, p2, p3 - 1, p4)
+        path.append(temp)
     return path
 
 def returnPath(temp):
@@ -337,7 +340,8 @@ def Level4MultiAgent(problem, starts, goals):
                 for _ in range(exceed):
                     paths[pa].pop()
         return [returnPath(paths[x]) for x in range(len(starts))], goal_list
-
+    for pa in range(len(starts)):
+        print(paths[pa])
     # move tracker
     move = [1 for _ in range(len(starts))]
     
@@ -368,51 +372,54 @@ def Level4MultiAgent(problem, starts, goals):
             # if next move of start i collide order start
             if (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
                 collide_idx = current_starts.index((paths[i][move[i]][0], paths[i][move[i]][1]))
-                if i < collide_idx:
-                    if paths[collide_idx][move[collide_idx] - 1][2] > 0 and paths[collide_idx][move[collide_idx] - 1][3] > 0 and (paths[collide_idx][move[collide_idx] - 1][0], paths[collide_idx][move[collide_idx] - 1][1]) != (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]):
-                        paths[i].insert(move[i], paths[i][move[i] - 1])
-                        for j in range(move[i], len(paths[i])):
-                            p1, p2, p3, p4 = paths[i][j]
-                            paths[i][j] = (p1, p2, p3 + 1, p4)
-                        move[i] += 1
-                    else:
-                        graph_temp = copy.deepcopy(empty_graph)
-                        graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                        graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                        while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
-                            graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
-                            paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
-                        move[i] += 1
-                        graph_temp = copy.deepcopy(empty_graph)
-                        graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                        graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                        paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
-                        paths[i] = expand_path(paths[i])
+                #if i < collide_idx:
+                if paths[collide_idx][move[collide_idx] - 1][2] > 0 and paths[collide_idx][move[collide_idx] - 1][3] > 0 and (paths[collide_idx][move[collide_idx] - 1][0], paths[collide_idx][move[collide_idx] - 1][1]) != (paths[collide_idx][move[collide_idx] - 2][0], paths[collide_idx][move[collide_idx] - 2][1]) and (paths[collide_idx][move[collide_idx]][0], paths[collide_idx][move[collide_idx]][1]) != (paths[collide_idx][move[collide_idx] - 1][0], paths[collide_idx][move[collide_idx] - 1][1]) and (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]) != (paths[collide_idx][move[collide_idx]][0], paths[collide_idx][move[collide_idx]][1]):
+                    paths[i].insert(move[i], paths[i][move[i] - 1])
+                    for j in range(move[i], len(paths[i])):
+                        p1, p2, p3, p4 = paths[i][j]
+                        paths[i][j] = (p1, p2, p3 - 1, p4)
+                    if paths[i][-1][2] < 0:
+                        paths[i].pop()
+                    move[i] += 1
+                    print('wait', i, move[i], paths[i])
                 else:
-                    if paths[collide_idx][move[collide_idx] - 1][2] > 0 and paths[collide_idx][move[collide_idx] - 1][3] > 0 and (paths[collide_idx][move[collide_idx] - 1][0], paths[collide_idx][move[collide_idx] - 1][1]) != (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]) and (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]) != (paths[i][move[i]-1][0], paths[i][move[i]-1][1]):
-                        paths[i].insert(move[i], paths[i][move[i] - 1])
-                        for j in range(move[i], len(paths[i])):
-                            p1, p2, p3, p4 = paths[i][j]
-                            paths[i][j] = (p1, p2, p3 + 1, p4)
-                        move[i] += 1
-                    else:
-                        graph_temp = copy.deepcopy(empty_graph)
-                        graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                        graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                        while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
-                            graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
-                            paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
-                        move[i] += 1
-                        print(i, move[i], paths[i])
-                        graph_temp = copy.deepcopy(empty_graph)
-                        graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                        graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                        print(graph_temp)
+                    
+                    graph_temp = copy.deepcopy(empty_graph)
+                    graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                    graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                    loo = 0
+                    while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts and loo < 5:
+                        graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
                         paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
-                        paths[i] = expand_path(paths[i])
-                        print(i, move[i], paths[i])
+                        loo += 1
+                    move[i] += 1
+                    graph_temp = copy.deepcopy(empty_graph)
+                    graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                    graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                    paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
+                    paths[i] = expand_path(paths[i])
+                    print('dodge', i, move[i], paths[i])
+                #else:
+                    #if paths[collide_idx][move[collide_idx] - 1][2] > 0 and paths[collide_idx][move[collide_idx] - 1][3] > 0 and (paths[collide_idx][move[collide_idx] - 1][0], paths[collide_idx][move[collide_idx] - 1][1]) != (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]) and (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]) != (paths[i][move[i]-1][0], paths[i][move[i]-1][1]):
+                        #paths[i].insert(move[i], paths[i][move[i] - 1])
+                        #for j in range(move[i], len(paths[i])):
+                            #p1, p2, p3, p4 = paths[i][j]
+                            #paths[i][j] = (p1, p2, p3 + 1, p4)
+                        #move[i] += 1
+                    #else:
+                        #graph_temp = copy.deepcopy(empty_graph)
+                        #graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                        #graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                        #while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
+                            #graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
+                            #paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
+                        #move[i] += 1
+                        #graph_temp = copy.deepcopy(empty_graph)
+                        #graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
+                        #graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
+                        #paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
+                        #paths[i] = expand_path(paths[i])
                 continue
-
             # if start i got to goal
             if (paths[i][move[i]][0], paths[i][move[i]][1]) == current_goals[i]:
                 if i == 0:
@@ -440,6 +447,7 @@ def Level4MultiAgent(problem, starts, goals):
                     paths[i] = expand_path(paths[i])
                     continue
             move[i] += 1
+            print('move', i, move[i], paths[i])
 
 
 # MAIN
@@ -447,5 +455,6 @@ paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
 print('goals', goals)
 for i in range(len(paths)):
     print(f'path S{i}', paths[i])
+
 #row, col, time, fuel, graph, start, goal = PROBLEM
 #print(A_star_level_4((row, col, time, fuel, fuel, graph, start, goal)))
