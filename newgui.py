@@ -11,6 +11,7 @@ pg.font.init()
 #Set window property
 winW, winH = 1000, 800
 
+#Class button for navigation
 class Button:
     def __init__(self, img_src, img_hover, action):
         self.image = pg.image.load(img_src)
@@ -34,6 +35,7 @@ class Button:
     def getSize(self):
         return self.rect.size
 
+#class Simulator for GUI
 class Simulator:
     def __init__(self, winW, winH, problem):
         self.winW, self.winH = winW, winH
@@ -71,15 +73,30 @@ class Simulator:
         cell = pg.Rect(0,0, self.cellW, self.cellH)
         cell.left, cell.top  = (pos[1]*(self.cellW + self.gut) +  offsetX, pos[0]*(self.cellH + self.gut) + offsetY)
         pg.draw.rect(self.window, background, cell, width)
+        self.drawCellContent(content, pos)
+
+    def drawPassedCellLine(self, content, startPos, endPos, color, width = 10):
+        offsetX, offsetY = self.getBoardOffsetOnCanvas()
+        startPixel = (startPos[1]*(self.cellW + self.gut) +  offsetX + self.cellW//2, startPos[0]*(self.cellH + self.gut) + offsetY  + self.cellH//2)
+        endPixel = (endPos[1]*(self.cellW + self.gut) +  offsetX +  self.cellW//2, endPos[0]*(self.cellH + self.gut) + offsetY  + self.cellH//2)
+        pg.draw.line(self.window, color, startPixel, endPixel, width)
+        # self.drawCellContent(content, startPos)
+    
+    def drawCurrentCursor(self, pos, color):
+        offsetX, offsetY = self.getBoardOffsetOnCanvas()
+        curW, curH = 18, 18
+        curPos = (pos[1]*(self.cellW + self.gut) +  offsetX + (self.cellW - curW)//2, pos[0]*(self.cellH + self.gut) + offsetY  + (self.cellH - curH)//2)
+        pg.draw.rect(self.window, color, pg.Rect(curPos, (curW, curH)), 3)
+
+    def drawCellContent(self, content, pos:tuple):
+        offsetX, offsetY = self.getBoardOffsetOnCanvas()
         if (content != "" and content != "0" and content != "-1"):
             font = pg.font.Font("Oswald-Regular.ttf", 24)
-            text = font.render(content, True, color)
+            text = font.render(content, True, "#000000")
             rect = text.get_rect()
-            rect.center = (cell.left + self.cellW//2, cell.top + self.cellW//2)
+            rect.center = (pos[1]*(self.cellW + self.gut) +  offsetX + self.cellW//2, pos[0]*(self.cellH + self.gut) + offsetY  + self.cellH//2)
             self.window.blit(text, rect)
-
-    
-    def getColor(self, type):
+    def getColor(self, type):   
         try:
             type = int(type)
             if (type > 0):
@@ -123,8 +140,6 @@ class Simulator:
             if level > 0:
                 break
         return level
-        pg.display.flip()
-    
 
     def drawSolutionPath(self, path):
         run = True
@@ -158,6 +173,8 @@ class Simulator:
             draw = True
         return
     
+    # def drawCurrentNode(self, content, pos:tuple, color, background:str, width = 0):
+
     
     def drawSolutionForLv4(self, path: list, goals: list):
         cell = pg.Rect(0, 0, self.cellW, self.cellH)
@@ -167,7 +184,16 @@ class Simulator:
         stepindex = [0]*len(path) #Regulate step in each path
         startindex = 0 #regulate each starts I
         oldstep = dict()
-        cellColor = [[211,249,168], [58,190,232], [233,125,50]]
+        cellColor = [[208, 189, 127],
+                    [138, 215, 159],
+                    [241, 191, 135],
+                    [167, 216, 132],
+                    [206, 216, 173],
+                    [220, 232, 180],
+                    [174, 182, 225],
+                    [216, 209, 131],
+                    [129, 223, 132],
+                    [237, 198, 158]]
         oldcellColor = [[channel - 50 for channel in color] for color in cellColor]
         mode = {0: True, 1: True} #0 is Manual, #1 is Auto
         print(path)
@@ -209,11 +235,18 @@ class Simulator:
             try:    
                 step = path[startindex][stepindex[startindex]]
                 # print(step)
+                # if (startindex in oldstep):
+                #     if (oldstep[startindex] != step):
+                #         temp = oldstep[startindex]
+                #         self.drawPassedCellLine(str(self.GRAPH[temp[0]][temp[1]]), temp, step, oldcellColor[startindex])
+                        # self.drawBoardCell(str(self.GRAPH[temp[0]][temp[1]]), temp, "#000000", oldcellColor[startindex])
+                # self.drawBoardCell(str(self.GRAPH[step[0]][step[1]]), step , "#000000", cellColor[startindex])
+                self.drawCurrentCursor(step, cellColor[startindex])
                 if (startindex in oldstep):
                     if (oldstep[startindex] != step):
                         temp = oldstep[startindex]
-                        self.drawBoardCell(str(self.GRAPH[temp[0]][temp[1]]), temp, "#000000", oldcellColor[startindex])
-                self.drawBoardCell(str(self.GRAPH[step[0]][step[1]]), step , "#000000", cellColor[startindex])
+                        # self.drawBoardCell(str(self.GRAPH[temp[0]][temp[1]]), temp , "#000000", self.getColor(str(self.GRAPH[temp[0]][temp[1]])))
+                        self.drawPassedCellLine(str(self.GRAPH[temp[0]][temp[1]]), temp, step, oldcellColor[startindex])
                 self.clock.tick(10)
                 pg.display.flip()
                 pg.time.delay(100)
