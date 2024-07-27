@@ -47,6 +47,10 @@ def bfs_heuristic(node, graph, row, col):
             if graph[neighborX][neighborY] != -1 and visited[neighborX][neighborY] == -1:
                 visited[neighborX][neighborY] = visited[curR][curC] + 1
                 queue.append((neighborX, neighborY))
+    for i in range(row):
+        for j in range(col):
+            if visited[i][j] == -1 and graph[i][j] != -1:
+                visited[i][j] = abs(i - node[0]) + abs(j - node[1])
     return visited
 
 # TRACING BACK:
@@ -266,13 +270,13 @@ def A_star_level_4(problem):
             return trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
         if curFuel <= 0:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-            if heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
+            if heuristic[temp[-1][0]][temp[-1][1]] != -1 and heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
                 min_heuristic = heuristic[temp[-1][0]][temp[-1][1]]
                 path = temp
             continue
         if curTime <= 0:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-            if heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
+            if heuristic[temp[-1][0]][temp[-1][1]] != -1 and heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
                 min_heuristic = heuristic[temp[-1][0]][temp[-1][1]]
                 path = temp
             continue
