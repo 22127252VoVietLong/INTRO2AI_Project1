@@ -270,13 +270,13 @@ def A_star_level_4(problem):
             return trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
         if curFuel <= 0:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-            if heuristic[temp[-1][0]][temp[-1][1]] != -1 and heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
+            if heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
                 min_heuristic = heuristic[temp[-1][0]][temp[-1][1]]
                 path = temp
             continue
         if curTime <= 0:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-            if heuristic[temp[-1][0]][temp[-1][1]] != -1 and heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
+            if heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
                 min_heuristic = heuristic[temp[-1][0]][temp[-1][1]]
                 path = temp
             continue
@@ -353,7 +353,7 @@ def Level4MultiAgent(problem, starts, goals):
                 exceed = len(paths[pa]) - len_path + 1
                 for _ in range(exceed):
                     paths[pa].pop()
-        return starts, goal_list
+        return starts, goal_list, -1
     #for pa in range(len(starts)):
         #print(paths[pa])
     #print('init')
@@ -374,14 +374,14 @@ def Level4MultiAgent(problem, starts, goals):
                             if bl[3] == 1:
                                 for pth in range(len(starts)):
                                     del paths[pth][bl[0]:]
-                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list, -1
                     len_path = len(paths[i])
                     for pa in range(1, len(starts)):
                         if len(paths[pa]) >= len_path:
                             exceed = len(paths[pa]) - len_path + 1
                             for _ in range(exceed):
                                 paths[pa].pop()
-                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list, -1
                 else:
                     continue
 
@@ -468,7 +468,7 @@ def Level4MultiAgent(problem, starts, goals):
                             exceed = len(paths[pa]) - len_path + 1
                             for _ in range(exceed):
                                 paths[pa].pop()
-                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list, 0
                 else:
                     move[i] += 1
                     block[i] = []
