@@ -293,9 +293,13 @@ def A_star_level_4(problem):
                     continue
                 if type(graph[neighborX][neighborY]) == type('a') and graph[neighborX][neighborY][0] == 'F':
                     newFuel = fuel0
-                    newTime -= int(graph[neighborX][neighborY][1:]) 
+                    newTime -= int(graph[neighborX][neighborY][1:])
+                    if newTime < 0:
+                        newTime = 0
                 if type(graph[neighborX][neighborY]) == type(1):
                     newTime -= int(graph[neighborX][neighborY])
+                    if newTime < 0:
+                        newTime = 0
                 visited[(neighborX, neighborY, newTime, newFuel)] = (curR, curC, curTime, curFuel)
                 path_cost[(neighborX, neighborY, newTime, newFuel)] = newCost
                 heappush(frontier, (newCost + heuristic[neighborX][neighborY], newTime, newFuel, neighborX, neighborY))
@@ -353,7 +357,7 @@ def Level4MultiAgent(problem, starts, goals):
                 exceed = len(paths[pa]) - len_path + 1
                 for _ in range(exceed):
                     paths[pa].pop()
-        return starts, goal_list
+        return starts, goal_list, -1
     #for pa in range(len(starts)):
         #print(paths[pa])
     #print('init')
@@ -369,19 +373,19 @@ def Level4MultiAgent(problem, starts, goals):
             if paths[i][move[i] - 1][2] <= 0 or paths[i][move[i] - 1][3] <= 0:
                 if i == 0:
                     if block[i]:
-                        #print('block', i, block[i])
+                        print('block', i, block[i])
                         for bl in block[i]:
                             if bl[3] == 1:
                                 for pth in range(len(starts)):
                                     del paths[pth][bl[0]:]
-                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list, -1
                     len_path = len(paths[i])
                     for pa in range(1, len(starts)):
                         if len(paths[pa]) >= len_path:
                             exceed = len(paths[pa]) - len_path + 1
                             for _ in range(exceed):
                                 paths[pa].pop()
-                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list, -1
                 else:
                     continue
 
@@ -405,6 +409,7 @@ def Level4MultiAgent(problem, starts, goals):
             # if start i dont move, skip
             if (paths[i][move[i]][0], paths[i][move[i]][1]) == (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]):
                 move[i] += 1
+                #print('stop', i, move[i], paths[i])
                 continue
 
             # if next move of start i collide order start
@@ -468,7 +473,7 @@ def Level4MultiAgent(problem, starts, goals):
                             exceed = len(paths[pa]) - len_path + 1
                             for _ in range(exceed):
                                 paths[pa].pop()
-                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list, 0
                 else:
                     move[i] += 1
                     block[i] = []
@@ -485,15 +490,24 @@ def Level4MultiAgent(problem, starts, goals):
                     graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
                     paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
+                    #print('before expand', paths[i])
                     paths[i] = expand_path(paths[i])
+                    #print('after expand', paths[i])
                     continue
             move[i] += 1
             #print('move', i, move[i], paths[i])
 
-
 # MAIN
-# ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
-# START = STARTS[0]
-# GOAL = GOALS[0]
-# PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
-# print(A_star_level_2(PROBLEM))
+#ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+#START = STARTS[0]
+#GOAL = GOALS[0]
+#PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
+
+#paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
+#print('goals', goals)
+#for i in range(len(paths)):
+    #print(f'path S{i}', paths[i])
+
+#row, col, time, fuel, graph, start, goal = PROBLEM
+#print(A_star_level_4((row, col, time, fuel, fuel, graph, start, goal)))
+#print(A_star_level_2(PROBLEM))
