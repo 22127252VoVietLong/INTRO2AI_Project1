@@ -373,7 +373,7 @@ def Level4MultiAgent(problem, starts, goals):
             if paths[i][move[i] - 1][2] <= 0 or paths[i][move[i] - 1][3] <= 0:
                 if i == 0:
                     if block[i]:
-                        print('block', i, block[i])
+                        #print('block', i, block[i])
                         for bl in block[i]:
                             if bl[3] == 1:
                                 for pth in range(len(starts)):
