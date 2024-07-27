@@ -446,6 +446,7 @@ def Level4MultiAgent(problem, starts, goals):
                     return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
                     move[i] += 1
+                    current_starts[i] = (paths[i][move[i]-1][0], paths[i][move[i]-1][1])
                     #generate new goal
                     r = random.randint(0, row - 1)
                     c = random.randint(0, col - 1)
