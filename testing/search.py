@@ -33,16 +33,25 @@ def read_file(filename):
         goals.pop()
     return row, col, time, fuel, graph, starts, goals
 
-ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
-START = STARTS[0]
-GOAL = GOALS[0]
-PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
-
-# MANHATTAN DISTANCE FOR CALCULATING HEURISTIC VALUE:
-def manhattan(start, end):
-    x1, y1 = start
-    x2, y2 = end
-    return abs(x1 - x2) + abs(y1 - y2)
+# HEURISTIC FUNCTION
+def bfs_heuristic(node, graph, row, col):
+    visited = [[-1 for _ in range(col)] for _ in range(row)]
+    visited[node[0]][node[1]] = 0
+    queue = [node]
+    while queue:
+        curR, curC = queue.pop(0)
+        for i in range(4):
+            neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
+            if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
+                continue
+            if graph[neighborX][neighborY] != -1 and visited[neighborX][neighborY] == -1:
+                visited[neighborX][neighborY] = visited[curR][curC] + 1
+                queue.append((neighborX, neighborY))
+    for i in range(row):
+        for j in range(col):
+            if visited[i][j] == -1 and graph[i][j] != -1:
+                visited[i][j] = abs(i - node[0]) + abs(j - node[1])
+    return visited
 
 # TRACING BACK:
 def trace(visited, start, end):
@@ -117,10 +126,11 @@ def UCS(problem):
 
 def GBFS(problem):
     row, col, _, _, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     visited = {} 
     visited[start] = start   
     x, y = start
-    frontier = [(manhattan(start, end), x, y)]
+    frontier = [(heuristic[x][y], x, y)]
     
     while frontier:
         _, curR, curC = heappop(frontier)
@@ -132,21 +142,22 @@ def GBFS(problem):
                 visited[(neighborX, neighborY)] = (curR, curC)
                 if graph[neighborX][neighborY] == "G":
                     return trace(visited, start, end)
-                heappush(frontier, (manhattan((neighborX, neighborY), end), neighborX, neighborY))
+                heappush(frontier, (heuristic[neighborX][neighborY], neighborX, neighborY))
     return [-1]
         
 
 def A_star(problem):
     row, col, _, _, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     visited = {} 
     visited[start] = start   
     x, y = start
-    frontier = [(manhattan(start, end), x, y)]
+    frontier = [(heuristic[x][y], x, y)]
     path_cost = {start: 0}
     
     while frontier:
         curCost, curR, curC = heappop(frontier)
-        curCost = curCost - manhattan((curR, curC), end)
+        curCost = curCost - heuristic[curR][curC]
 
         if (curR, curC) == end:
             return trace(visited, start, end)
@@ -163,20 +174,21 @@ def A_star(problem):
                 
                 visited[(neighborX, neighborY)] = (curR, curC)
                 path_cost[(neighborX, neighborY)] = new_cost
-                heappush(frontier, (new_cost + manhattan((neighborX, neighborY), end), neighborX, neighborY))
+                heappush(frontier, (new_cost + heuristic[neighborX][neighborY], neighborX, neighborY))
     return [-1]                    
 
 # LEVEL 2:
 def A_star_level_2(problem):
     row, col, time, _, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     x, y = start
     visited = {} 
     visited[(x, y, time)] = (x, y, time)
     path_cost = {(x, y, time): 0}
-    frontier = [(manhattan(start, end), time, x, y)]
+    frontier = [(heuristic[x][y], time, x, y)]
     while frontier:
         curCost, curTime, curR, curC = heappop(frontier)
-        curCost = curCost - manhattan((curR, curC), end)
+        curCost = curCost - heuristic[curR][curC]
         if (curR, curC) == end:
             temp = trace(visited, (x, y, time), (curR, curC, curTime))
             path = [(item[0], item[1]) for item in temp]
@@ -196,21 +208,22 @@ def A_star_level_2(problem):
                     newTime -= int(graph[neighborX][neighborY])
                 visited[(neighborX, neighborY, newTime)] = (curR, curC, curTime)
                 path_cost[(neighborX, neighborY, newTime)] = newCost
-                heappush(frontier, (newCost + manhattan((neighborX, neighborY), end), newTime, neighborX, neighborY))
+                heappush(frontier, (newCost + heuristic[neighborX][neighborY], newTime, neighborX, neighborY))
     return [-1]
 
 
 # LEVEL 3:
 def A_star_level_3(problem):
     row, col, time, fuel, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     x, y = start
     visited = {} 
     visited[(x, y, time, fuel)] = (x, y, time, fuel)
     path_cost = {(x, y, time, fuel): 0}
-    frontier = [(manhattan(start, end), time, fuel, x, y)]
+    frontier = [(heuristic[x][y], time, fuel, x, y)]
     while frontier:
         curCost, curTime, curFuel, curR, curC = heappop(frontier)
-        curCost = curCost - manhattan((curR, curC), end)
+        curCost = curCost - heuristic[curR][curC]
         if (curR, curC) == end:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
             path = [(item[0], item[1]) for item in temp]
@@ -236,34 +249,35 @@ def A_star_level_3(problem):
                     newTime -= int(graph[neighborX][neighborY])
                 visited[(neighborX, neighborY, newTime, newFuel)] = (curR, curC, curTime, curFuel)
                 path_cost[(neighborX, neighborY, newTime, newFuel)] = newCost
-                heappush(frontier, (newCost + manhattan((neighborX, neighborY), end), newTime, newFuel, neighborX, neighborY))
+                heappush(frontier, (newCost + heuristic[neighborX][neighborY], newTime, newFuel, neighborX, neighborY))
     return [-1]
 
 # LEVEL 4 - LET KIEN COOK
 def A_star_level_4(problem):
     row, col, time, fuel, fuel0, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     x, y = start
     visited = {} 
     visited[(x, y, time, fuel)] = (x, y, time, fuel)
     path_cost = {(x, y, time, fuel): 0}
-    frontier = [(manhattan(start, end), time, fuel, x, y)]
+    frontier = [(heuristic[x][y], time, fuel, x, y)]
     path = [(start[0], start[1], time, fuel), (start[0], start[1], time - 1, fuel)]
     min_heuristic = row * col
     while frontier:
         curCost, curTime, curFuel, curR, curC = heappop(frontier)
-        curCost = curCost - manhattan((curR, curC), end)
+        curCost = curCost - heuristic[curR][curC]
         if (curR, curC) == end:
             return trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
         if curFuel <= 0:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-            if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
-                min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
+            if heuristic[temp[-1][0]][temp[-1][1]] != -1 and heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
+                min_heuristic = heuristic[temp[-1][0]][temp[-1][1]]
                 path = temp
             continue
         if curTime <= 0:
             temp = trace(visited, (x, y, time, fuel), (curR, curC, curTime, curFuel))
-            if manhattan((temp[-1][0], temp[-1][1]), end) < min_heuristic:
-                min_heuristic = manhattan((temp[-1][0], temp[-1][1]), end)
+            if heuristic[temp[-1][0]][temp[-1][1]] != -1 and heuristic[temp[-1][0]][temp[-1][1]] < min_heuristic:
+                min_heuristic = heuristic[temp[-1][0]][temp[-1][1]]
                 path = temp
             continue
         for i in range(4):
@@ -284,7 +298,7 @@ def A_star_level_4(problem):
                     newTime -= int(graph[neighborX][neighborY])
                 visited[(neighborX, neighborY, newTime, newFuel)] = (curR, curC, curTime, curFuel)
                 path_cost[(neighborX, neighborY, newTime, newFuel)] = newCost
-                heappush(frontier, (newCost + manhattan((neighborX, neighborY), end), newTime, newFuel, neighborX, neighborY))
+                heappush(frontier, (newCost + heuristic[neighborX][neighborY], newTime, newFuel, neighborX, neighborY))
     return path
 
 def expand_path(path):
@@ -331,7 +345,7 @@ def Level4MultiAgent(problem, starts, goals):
         paths[s] = A_star_level_4((row, col, time, fuel, fuel, graph_temp, starts[s], goals[s]))
         paths[s] = expand_path(paths[s])
 
-    # if there is no possible path from S to G, return -1
+    # if there is no possible path from S to G, return 
     if (paths[0][-1][0], paths[0][-1][1]) != goals[0]:
         len_path = len(paths[i])
         for pa in range(1, len(starts)):
@@ -339,9 +353,10 @@ def Level4MultiAgent(problem, starts, goals):
                 exceed = len(paths[pa]) - len_path + 1
                 for _ in range(exceed):
                     paths[pa].pop()
-        return [returnPath(paths[x]) for x in range(len(starts))], goal_list
+        return starts, goal_list
     for pa in range(len(starts)):
         print(paths[pa])
+    print('init')
     # move tracker
     move = [1 for _ in range(len(starts))]
     # blocked block
@@ -353,6 +368,13 @@ def Level4MultiAgent(problem, starts, goals):
             # time and fuel check
             if paths[i][move[i] - 1][2] <= 0 or paths[i][move[i] - 1][3] <= 0:
                 if i == 0:
+                    if block[i]:
+                        print('block', i, block[i])
+                        for bl in block[i]:
+                            if bl[3] == 1:
+                                for pth in range(len(starts)):
+                                    del paths[pth][bl[0]:]
+                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                     len_path = len(paths[i])
                     for pa in range(1, len(starts)):
                         if len(paths[pa]) >= len_path:
@@ -370,7 +392,7 @@ def Level4MultiAgent(problem, starts, goals):
             del_block = False
             if block[i]:
                 for bl in range(len(block[i]) - 1, -1, -1):
-                    if block[i][bl] not in current_starts:
+                    if (block[i][bl][1],block[i][bl][2]) not in current_starts:
                         del_block = True
                         block[i].pop(bl)
             if del_block:
@@ -404,9 +426,12 @@ def Level4MultiAgent(problem, starts, goals):
                     graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
                     loo = 0
                     while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts and loo < 5:
-                        block[i].append((paths[i][move[i]][0], paths[i][move[i]][1]))
+                        block[i].append((move[i], paths[i][move[i]][0], paths[i][move[i]][1], 0))
                         graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
                         paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
+                        if (paths[i][-1][0], paths[i][-1][1]) != goals[i]:
+                            a, b, c, d = block[i][-1]
+                            block[i][-1] = (a, b, c, 1)
                         loo += 1
                     move[i] += 1
                     paths[i] = expand_path(paths[i])
@@ -446,6 +471,7 @@ def Level4MultiAgent(problem, starts, goals):
                     return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
                     move[i] += 1
+                    block[i] = []
                     current_starts[i] = (paths[i][move[i]-1][0], paths[i][move[i]-1][1])
                     #generate new goal
                     r = random.randint(0, row - 1)
@@ -464,8 +490,12 @@ def Level4MultiAgent(problem, starts, goals):
             move[i] += 1
             print('move', i, move[i], paths[i])
 
-
 # MAIN
+ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+START = STARTS[0]
+GOAL = GOALS[0]
+PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
+
 paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
 print('goals', goals)
 for i in range(len(paths)):
@@ -473,3 +503,4 @@ for i in range(len(paths)):
 
 #row, col, time, fuel, graph, start, goal = PROBLEM
 #print(A_star_level_4((row, col, time, fuel, fuel, graph, start, goal)))
+# print(A_star_level_2(PROBLEM))
