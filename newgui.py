@@ -114,22 +114,46 @@ class Simulator:
         pg.draw.rect(self.window, "#CCCCCC", eraser)
         self.window.blit(algo, (24, 36+36))
         self.window.blit(level, (24, 72+48))
+        pg.display.flip()
 
 
     def drawToggleHelp(self):
         font = pg.font.Font("Oswald-Regular.ttf", 24)
         message = ["A: Auto On/Off", "N: Next round", "R: Reset run", "Q: Next Algo", "Q: Quit (last Algo)"]
+        toggleoffset = self.HUD["togglehelp"].size[1]//2
         for i in range(len(message)):
             text = font.render(message[i], True, "#000000")
-            self.window.blit(text, (24, self.HUD["togglehelp"].top + (i+1)*(36 + 12)))
+            self.window.blit(text, (24, self.HUD["togglehelp"].top + (i+1)*(36 + 12) + toggleoffset))
         pg.display.flip()
 
 
-    def resetBoard(self):
+    def resetBoard(self, level):
         for i in range(self.ROW):
             for j in range(self.COL):
                 cellColor = self.getColor(self.GRAPH[i][j])
-                self.drawBoardCell(str(self.GRAPH[i][j]), (i,j), "#000000", cellColor)
+                content = str(self.GRAPH[i][j])
+                if (level == 1):
+                    if (content == "S" or content == "G" or content == "-1" or content == "0"):
+                        self.drawBoardCell(content, (i,j), "#000000", cellColor)
+                    else:
+                        content = "0"
+                        self.drawBoardCell(content, (i,j), "#000000", self.getColor(0))
+                elif (level == 2):
+                    if (content[0] == 'F' or (content[0] == 'S' and content != "S") or  (content[0] == 'G' and content != "G")): 
+                        content = "0"
+                        self.drawBoardCell(content, (i,j), "#000000", self.getColor(0))
+                    else:
+                        self.drawBoardCell(content, (i,j), "#000000", cellColor)
+                elif (level == 3):
+                    if ((content[0] == 'S' and content != "S") or  (content[0] == 'G' and content != "G")):
+                        content = "0"
+                        self.drawBoardCell(content, (i,j), "#000000", self.getColor(0))
+                    else:
+                        self.drawBoardCell(content, (i,j), "#000000", cellColor)
+                else:
+                    self.drawBoardCell(content, (i,j), "#000000", cellColor)
+
+                       
         pg.display.flip()
 
     def showMenu(self):
@@ -140,9 +164,11 @@ class Simulator:
                 break
         return level
 
-    def drawSolutionPath(self, path):
+    def drawSolutionPath(self, path, level):
         run = True
         draw = False
+        simtime = self.TIME
+        simfuel = self.FUEL
         index = 0
         cellColor = (103, 209, 82)
         oldColor = tuple([i - 50 for i in cellColor])
@@ -167,20 +193,36 @@ class Simulator:
             if (path[0] != -1):
                 if draw == False:
                     pg.draw.rect(self.window, "#CCCCCC", pg.Rect(210, 210, 780, 580))
-                    self.resetBoard()
-            try:
-                step = path[index]
-                if len(oldstep) > 0 and oldstep[-1] != step:
-                    temp = oldstep.pop()
-                    self.drawPassedCellLine(temp, step, oldColor)
-                self.drawCurrentCursor( step , cellColor)
-                oldstep.append(step)
-                if(mode[0] or mode[1]):
-                    index+=1
-                    mode[0] = False
-            except:
-                continue
-            
+                    self.resetBoard(level)
+                try:
+                    step = path[index]
+                    if len(oldstep) > 0 and oldstep[-1] != step:
+                        temp = oldstep.pop()
+                        self.drawPassedCellLine(temp, step, oldColor)
+                    self.drawCurrentCursor( step , cellColor)
+                    oldstep.append(step)
+                    if(mode[0] or mode[1]):
+                        index+=1
+                        mode[0] = False
+                except:
+                    if index == len(path):
+                        font = pg.font.Font("Oswald-Regular.ttf", 24)
+                        text = font.render("S reached goal", True, (0,0,0))
+                        dest = text.get_rect()
+                        dest.top = (self.HUD["eventbox"].size[1] - 36)//2
+                        dest.left = (self.HUD["eventbox"].size[1] + 36)
+                        self.window.blit(text, dest)
+                        pg.display.flip()
+                    continue
+            else:
+                font = pg.font.Font("Oswald-Regular.ttf", 24)
+                text = font.render("S do not have a path", True, (0,0,0))
+                dest = text.get_rect()
+                dest.top = (self.HUD["eventbox"].size[1] - 36)//2
+                dest.left = (self.HUD["eventbox"].size[1] + 36)
+                self.window.blit(text, dest)
+
+                
             self.clock.tick(10)
             pg.display.flip()
             pg.time.delay(100)
@@ -212,6 +254,8 @@ class Simulator:
         print(path)
         #Add new goal to board
         count = 0
+        goallists = copy.deepcopy(goals)
+
         for goallist in goals:
             for goal in goallist:
                 if str(self.GRAPH[goal[0]][goal[1]])[0] != "G":
@@ -241,7 +285,7 @@ class Simulator:
                         mode[1] = not mode[1]
             if draw == False:
                 pg.draw.rect(self.window, "#CCCCCC", pg.Rect(210, 210, 780, 580))
-                self.resetBoard()
+                self.resetBoard(4)
             # pop = False
             if (startindex == len(path)): # Pass the last start
                 startindex = 0
@@ -292,19 +336,21 @@ class Simulator:
             # # print(level)
             if (level > 0 and level < 4):
                     self.window.fill("#CCCCCC") 
-                    self.window.blit(self.HUDFrame,(0,0))
-                    self.drawToggleHelp()
                     pg.display.flip()
                     for algorithm in self.algorithm[level]:
+                        self.window.blit(self.HUDFrame,(0,0))
+                        self.drawToggleHelp()
+                        self.resetBoard(level)
                         self.drawInfo(algorithm[1], level)
                         path = algorithm[0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL))
-                        self.drawSolutionPath(path)
+                        self.drawSolutionPath(path, level)
                         pg.time.delay(300)
                     level = 0
             if (level == 4):
                     self.window.fill("#CCCCCC")
                     self.window.blit(self.HUDFrame,(0,0))
                     self.drawToggleHelp()
+                    self.resetBoard(level)
                     self.drawInfo(self.algorithm[4][0][1], level)
                     pg.display.flip()
                     paths, goals = self.algorithm[4][0][0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL), self.STARTS, self.GOALS)
