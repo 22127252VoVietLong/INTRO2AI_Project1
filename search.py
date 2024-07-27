@@ -33,14 +33,9 @@ def read_file(filename):
         goals.pop()
     return row, col, time, fuel, graph, starts, goals
 
-# MANHATTAN DISTANCE FOR CALCULATING HEURISTIC VALUE:
-def manhattan(start, end):
-    x1, y1 = start
-    x2, y2 = end
-    return abs(x1 - x2) + abs(y1 - y2)
-
+# HEURISTIC FUNCTION
 def bfs_heuristic(node, graph, row, col):
-    visited = [[0 for _ in range(col)] for _ in range(row)]
+    visited = [[-1 for _ in range(col)] for _ in range(row)]
     visited[node[0]][node[1]] = 0
     queue = [node]
     while queue:
@@ -49,7 +44,7 @@ def bfs_heuristic(node, graph, row, col):
             neighborX, neighborY = (curR + DIRECTION[0][i], curC + DIRECTION[1][i])
             if neighborX < 0 or neighborX >= row or neighborY < 0 or neighborY >= col:
                 continue
-            if graph[neighborX][neighborY] != -1 and visited[neighborX][neighborY] == 0:
+            if graph[neighborX][neighborY] != -1 and visited[neighborX][neighborY] == -1:
                 visited[neighborX][neighborY] = visited[curR][curC] + 1
                 queue.append((neighborX, neighborY))
     return visited
@@ -127,10 +122,11 @@ def UCS(problem):
 
 def GBFS(problem):
     row, col, _, _, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     visited = {} 
     visited[start] = start   
     x, y = start
-    frontier = [(manhattan(start, end), x, y)]
+    frontier = [(heuristic[x][y], x, y)]
     
     while frontier:
         _, curR, curC = heappop(frontier)
@@ -142,21 +138,22 @@ def GBFS(problem):
                 visited[(neighborX, neighborY)] = (curR, curC)
                 if graph[neighborX][neighborY] == "G":
                     return trace(visited, start, end)
-                heappush(frontier, (manhattan((neighborX, neighborY), end), neighborX, neighborY))
+                heappush(frontier, (heuristic[neighborX][neighborY], neighborX, neighborY))
     return [-1]
         
 
 def A_star(problem):
     row, col, _, _, graph, start, end = problem
+    heuristic = bfs_heuristic(end, graph, row, col)
     visited = {} 
     visited[start] = start   
     x, y = start
-    frontier = [(manhattan(start, end), x, y)]
+    frontier = [(heuristic[x][y], x, y)]
     path_cost = {start: 0}
     
     while frontier:
         curCost, curR, curC = heappop(frontier)
-        curCost = curCost - manhattan((curR, curC), end)
+        curCost = curCost - heuristic[curR][curC]
 
         if (curR, curC) == end:
             return trace(visited, start, end)
@@ -173,7 +170,7 @@ def A_star(problem):
                 
                 visited[(neighborX, neighborY)] = (curR, curC)
                 path_cost[(neighborX, neighborY)] = new_cost
-                heappush(frontier, (new_cost + manhattan((neighborX, neighborY), end), neighborX, neighborY))
+                heappush(frontier, (new_cost + heuristic[neighborX][neighborY], neighborX, neighborY))
     return [-1]                    
 
 # LEVEL 2:
