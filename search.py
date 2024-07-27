@@ -353,7 +353,7 @@ def Level4MultiAgent(problem, starts, goals):
                 exceed = len(paths[pa]) - len_path + 1
                 for _ in range(exceed):
                     paths[pa].pop()
-        return starts, goal_list, -1
+        return starts, goal_list
     #for pa in range(len(starts)):
         #print(paths[pa])
     #print('init')
@@ -374,14 +374,14 @@ def Level4MultiAgent(problem, starts, goals):
                             if bl[3] == 1:
                                 for pth in range(len(starts)):
                                     del paths[pth][bl[0]:]
-                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list, -1
+                                return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                     len_path = len(paths[i])
                     for pa in range(1, len(starts)):
                         if len(paths[pa]) >= len_path:
                             exceed = len(paths[pa]) - len_path + 1
                             for _ in range(exceed):
                                 paths[pa].pop()
-                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list, -1
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
                     continue
 
@@ -468,7 +468,7 @@ def Level4MultiAgent(problem, starts, goals):
                             exceed = len(paths[pa]) - len_path + 1
                             for _ in range(exceed):
                                 paths[pa].pop()
-                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list, 0
+                    return [returnPath(paths[x]) for x in range(len(starts))], goal_list
                 else:
                     move[i] += 1
                     block[i] = []
