@@ -265,7 +265,7 @@ class Simulator:
                         mode[0] = True
                     if event.key == pg.K_a:
                         mode[1] = not mode[1]
-            if (path[0] != -1 or simtime >= 0):
+            if (path[0] != -1):
                 if draw == False:
                     pg.draw.rect(self.window, "#CCCCCC", pg.Rect(210, 210, 780, 580))
                     pg.draw.rect(self.window, "#CCCCCC", pg.Rect(210, 10, self.HUD["eventbox"].size[0] - 20, self.HUD["eventbox"].size[1] - 20))
@@ -313,8 +313,6 @@ class Simulator:
             else:
                 self.drawText("S do not have a path", ((self.HUD["eventbox"].left + 24), ((self.HUD["eventbox"].size[1] - 36) // 2)))
                 pg.display.flip()
-                
-
                 
             self.clock.tick(4)
             pg.display.flip()
