@@ -56,7 +56,7 @@ class Simulator:
                           , 2: [(A_star_level_2, "Super A* 2"), ]
                           , 3: [(A_star_level_3, "Super A* 3"), ]
                           , 4:[(Level4MultiAgent, "Level 4 Search")]}
-        self.cellW = min(min(60, self.HUD["canvas"].size[0]//self.ROW ) - self.gut *2, min(60, self.HUD["canvas"].size[1]//self.COL ) - self.gut *2)
+        self.cellW = min(min(60, max(self.HUD["canvas"].size[0]//self.ROW, 36) ) - self.gut *2, min(60, max(self.HUD["canvas"].size[1]//self.COL, 36 )) - self.gut *2)
         self.cellH = self.cellW
         self.boardSize = (int(self.cellW * self.COL + self.gut*(self.COL)), int(self.cellW * self.ROW + self.gut*(self.ROW)))
         
@@ -99,7 +99,7 @@ class Simulator:
     def drawCellContent(self, content, pos:tuple):
         offsetX, offsetY = self.getBoardOffsetOnCanvas()
         if (content != "" and content != "0" and content != "-1"):
-            font = pg.font.Font("Oswald-Regular.ttf", 24)
+            font = pg.font.Font("Oswald-Regular.ttf", 20)
             text = font.render(content, True, "#000000")
             rect = text.get_rect()
             rect.center = (pos[1]*(self.cellW + self.gut) +  offsetX + self.cellW//2, pos[0]*(self.cellH + self.gut) + offsetY  + self.cellH//2)
@@ -276,7 +276,6 @@ class Simulator:
                     step = path[index]
                     content = str(self.GRAPH[step[0]][step[1]])
                     #Get time booth or fuel value
-                    # print(booth)
                     if (level >= 2):
                         if (content.isdigit() and content != "0" and booth == 0 and move ):
                             booth = int(content)
@@ -352,9 +351,6 @@ class Simulator:
                         (238, 130, 238),
                         (227, 157, 159)]
         mode = {0: True, 1: True} #0 is Manual, #1 is Auto
-        print("Debug")
-        for pathline in path:
-            print(pathline)
         #Children loop
         while run:
             if (resetDebug):
@@ -404,7 +400,6 @@ class Simulator:
                         mode[1] = not mode[1]
             # pop = False
             if (startindex == len(path)): # Pass the last start
-                # print(endPath)
                 if False in endPath:
                     simtime -= 1
                     startindex = 0
@@ -433,10 +428,8 @@ class Simulator:
                 self.drawIngameStat(f"S{startindex}", simfuel[startindex])
                 self.clock.tick(10)
                 if (step == goals[startindex][0]):
-                    print(f"reach {startindex}")
                     for newgoal in goals[startindex]:
                         if str(self.GRAPH[newgoal[0]][newgoal[1]])[0] != "G":
-                            print(f"draw {startindex}")
                             # self.GRAPH[newgoal[0]][newgoal[1]] =  # Added Goal
                             self.drawBoardCell(f"GX{count}", newgoal, (0,0,0), self.getColor("G"))
                             count += 1
@@ -447,7 +440,6 @@ class Simulator:
                     hasold[startindex] = True
                     stepindex[startindex] += 1
                     if stepindex[startindex] == len(path[startindex]):
-                        print(f"end path {startindex}")
                         endPath[startindex] = True
                     startindex += 1 #Turn for next start
             except:
@@ -471,7 +463,6 @@ class Simulator:
                     return
             self.window.fill("#CCCCCC")
             level = self.showMenu()
-            # # print(level)
             if (level > 0 and level < 4):
                     self.window.fill("#CCCCCC") 
                     pg.display.flip()
@@ -494,7 +485,6 @@ class Simulator:
                     self.drawInfo(self.algorithm[4][0][1], level)
                     pg.display.flip()
                     paths, goals, flag = self.algorithm[4][0][0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL), self.STARTS, self.GOALS)
-                    print(goals)
                     run = self.drawSolutionForLv4(paths, goals, flag)
                     if (run == False):
                             return
@@ -510,7 +500,7 @@ def main():
         print("Start initializing problem...")
         pg.init()
         pg.font.init()
-        ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+        ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("testcases\\" + filepath)
         START = STARTS[0]
         GOAL = GOALS[0]
         PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
