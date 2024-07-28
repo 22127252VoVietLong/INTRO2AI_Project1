@@ -498,14 +498,17 @@ def main():
         print("Start initializing problem...")
         pg.init()
         pg.font.init()
-        ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file(filepath)
-        START = STARTS[0]
-        GOAL = GOALS[0]
-        PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
-        sim = Simulator(winW, winH, PROBLEM)
-        print("Run simulation")
-        print("If you want another input, please turn off the Simulation window")
-        sim.run()
+        try:
+            ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file(filepath)
+            START = STARTS[0]
+            GOAL = GOALS[0]
+            PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
+            sim = Simulator(winW, winH, PROBLEM)
+            print("Run simulation")
+            print("If you want another input, please turn off the Simulation window")
+            sim.run()
+        except:
+            print("File invalid, please input another file")
         filepath = input("Problem file path (0 to exit program): ")
 
 main()
