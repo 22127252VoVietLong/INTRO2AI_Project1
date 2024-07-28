@@ -235,6 +235,7 @@ class Simulator:
         simfuel = self.FUEL
         booth = 0
         move = False
+        hasold = False
         self.drawIngameStat("time", simtime)
         self.drawIngameStat("S", simfuel)
 
@@ -248,10 +249,10 @@ class Simulator:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                    sys.exit()
+                    return False
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_q:
-                        return
+                        return True
                     if event.key == pg.K_r:
                         draw = False
                         index = 0
@@ -260,6 +261,7 @@ class Simulator:
                         booth = 0
                         move = False
                         oldstep.clear()
+                        hasold = False
                         
                     if event.key == pg.K_n:
                         mode[0] = True
@@ -285,7 +287,6 @@ class Simulator:
                             move = False
                             simfuel = self.FUEL + 1
 
-
                     if len(oldstep) > 0 and oldstep[-1] != step:
                         temp = oldstep.pop()
                         if level == 3:
@@ -296,10 +297,10 @@ class Simulator:
                     self.drawIngameStat("S", simfuel)
                     self.drawCurrentCursor(step,cellColor)
                     if(mode[0] or mode[1]):
-                        oldstep.append(step)
                         if (level == 2 or level == 3):
                             simtime -= 1
                         if(booth == 0):
+                            oldstep.append(step)
                             move = True
                             index+=1
                         else:
@@ -313,6 +314,8 @@ class Simulator:
             else:
                 self.drawText("S do not have a path", ((self.HUD["eventbox"].left + 24), ((self.HUD["eventbox"].size[1] - 36) // 2)))
                 pg.display.flip()
+                
+
                 
             self.clock.tick(4)
             pg.display.flip()
@@ -370,11 +373,12 @@ class Simulator:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                    sys.exit()
+                    # sys.exit()
+                    return False
                 if event.type == pg.KEYDOWN:
                     if event.key == pg.K_q:
-                        run = False
-                        continue
+                        return True
+            
                     if event.key == pg.K_r:
                         draw = False
                         # stepindex = 0 #Regulate step in each path
@@ -452,7 +456,7 @@ class Simulator:
                 continue
             # draw = True
         # self.GRAPH = copy.deepcopy(copyGraph)
-        return
+        return True
 
     def run(self):
         run = True
@@ -464,7 +468,7 @@ class Simulator:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                    sys.exit()
+                    return
             self.window.fill("#CCCCCC")
             level = self.showMenu()
             # # print(level)
@@ -477,7 +481,9 @@ class Simulator:
                         self.resetBoard(level)
                         self.drawInfo(algorithm[1], level)
                         path = algorithm[0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL))
-                        self.drawSolutionPath(path, level)
+                        run = self.drawSolutionPath(path, level)
+                        if (run == False):
+                            return
                         pg.time.delay(300)
                     level = 0
             if (level == 4):
@@ -489,15 +495,29 @@ class Simulator:
                     pg.display.flip()
                     paths, goals, flag = self.algorithm[4][0][0]((self.ROW, self.COL, self.TIME, self.FUEL, self.GRAPH, self.START, self.GOAL), self.STARTS, self.GOALS)
                     print(goals)
-                    self.drawSolutionForLv4(paths, goals, flag)
+                    run = self.drawSolutionForLv4(paths, goals, flag)
+                    if (run == False):
+                            return
                     level = 0
             pg.display.flip()
             self.clock.tick(60)
 
-ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
-START = STARTS[0]
-GOAL = GOALS[0]
-PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
 
-sim = Simulator(winW, winH, PROBLEM)
-sim.run()
+def main():
+    filepath = input("Problem file path (0 to exit program): ")
+    
+    while (filepath != "0"):
+        print("Start initializing problem...")
+        pg.init()
+        pg.font.init()
+        ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
+        START = STARTS[0]
+        GOAL = GOALS[0]
+        PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
+        sim = Simulator(winW, winH, PROBLEM)
+        print("Run simulation")
+        sim.run()
+        print("If you want another input, please turn off the Simulation window")
+        filepath = input("Problem file path (0 to exit program): ")
+
+main()
