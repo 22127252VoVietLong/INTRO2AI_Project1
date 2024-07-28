@@ -50,8 +50,11 @@ def bfs_heuristic(node, graph, row, col):
     for i in range(row):
         for j in range(col):
             if visited[i][j] == -1 and graph[i][j] != -1:
-                visited[i][j] = abs(i - node[0]) + abs(j - node[1])
+                visited[i][j] = manhattan(graph[i][j], node)
     return visited
+
+def manhattan(start, end):
+    return abs(start[0] - end[0]) + abs(start[1] - end[1])
 
 # TRACING BACK:
 def trace(visited, start, end):
@@ -126,11 +129,10 @@ def UCS(problem):
 
 def GBFS(problem):
     row, col, _, _, graph, start, end = problem
-    heuristic = bfs_heuristic(end, graph, row, col)
     visited = {} 
     visited[start] = start   
     x, y = start
-    frontier = [(heuristic[x][y], x, y)]
+    frontier = [(manhattan(start, end), x, y)]
     
     while frontier:
         _, curR, curC = heappop(frontier)
@@ -142,22 +144,21 @@ def GBFS(problem):
                 visited[(neighborX, neighborY)] = (curR, curC)
                 if graph[neighborX][neighborY] == "G":
                     return trace(visited, start, end)
-                heappush(frontier, (heuristic[neighborX][neighborY], neighborX, neighborY))
+                heappush(frontier, (manhattan((neighborX, neighborY), end), neighborX, neighborY))
     return [-1]
         
 
 def A_star(problem):
     row, col, _, _, graph, start, end = problem
-    heuristic = bfs_heuristic(end, graph, row, col)
     visited = {} 
     visited[start] = start   
     x, y = start
-    frontier = [(heuristic[x][y], x, y)]
+    frontier = [(manhattan(start, end), x, y)]
     path_cost = {start: 0}
     
     while frontier:
         curCost, curR, curC = heappop(frontier)
-        curCost = curCost - heuristic[curR][curC]
+        curCost = curCost - manhattan((curR, curC), end)
 
         if (curR, curC) == end:
             return trace(visited, start, end)
@@ -174,7 +175,7 @@ def A_star(problem):
                 
                 visited[(neighborX, neighborY)] = (curR, curC)
                 path_cost[(neighborX, neighborY)] = new_cost
-                heappush(frontier, (new_cost + heuristic[neighborX][neighborY], neighborX, neighborY))
+                heappush(frontier, (new_cost + manhattan((neighborX, neighborY), end), neighborX, neighborY))
     return [-1]                    
 
 # LEVEL 2:
@@ -252,7 +253,7 @@ def A_star_level_3(problem):
                 heappush(frontier, (newCost + heuristic[neighborX][neighborY], newTime, newFuel, neighborX, neighborY))
     return [-1]
 
-# LEVEL 4 - LET KIEN COOK
+# LEVEL 4 
 def A_star_level_4(problem):
     row, col, time, fuel, fuel0, graph, start, end = problem
     heuristic = bfs_heuristic(end, graph, row, col)
@@ -440,27 +441,6 @@ def Level4MultiAgent(problem, starts, goals):
                         loo += 1
                     move[i] += 1
                     paths[i] = expand_path(paths[i])
-                    #print('dodge', i, move[i], paths[i])
-                #else:
-                    #if paths[collide_idx][move[collide_idx] - 1][2] > 0 and paths[collide_idx][move[collide_idx] - 1][3] > 0 and (paths[collide_idx][move[collide_idx] - 1][0], paths[collide_idx][move[collide_idx] - 1][1]) != (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]) and (paths[collide_idx + 1][move[collide_idx]][0], paths[collide_idx + 1][move[collide_idx]][1]) != (paths[i][move[i]-1][0], paths[i][move[i]-1][1]):
-                        #paths[i].insert(move[i], paths[i][move[i] - 1])
-                        #for j in range(move[i], len(paths[i])):
-                            #p1, p2, p3, p4 = paths[i][j]
-                            #paths[i][j] = (p1, p2, p3 + 1, p4)
-                        #move[i] += 1
-                    #else:
-                        #graph_temp = copy.deepcopy(empty_graph)
-                        #graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                        #graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                        #while (paths[i][move[i]][0], paths[i][move[i]][1]) in current_starts:
-                            #graph_temp[paths[i][move[i]][0]][paths[i][move[i]][1]] = -1
-                            #paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
-                        #move[i] += 1
-                        #graph_temp = copy.deepcopy(empty_graph)
-                        #graph_temp[paths[i][move[i] - 1][0]][paths[i][move[i] - 1][1]] = 'S'
-                        #graph_temp[current_goals[i][0]][current_goals[i][1]] = 'G'
-                        #paths[i][move[i] - 1:] = A_star_level_4((row, col, paths[i][move[i] - 1][2], paths[i][move[i] - 1][3], fuel, graph_temp, (paths[i][move[i] - 1][0], paths[i][move[i] - 1][1]), current_goals[i]))
-                        #paths[i] = expand_path(paths[i])
                 continue
             # if start i got to goal
             if (paths[i][move[i]][0], paths[i][move[i]][1]) == current_goals[i]:
@@ -495,19 +475,4 @@ def Level4MultiAgent(problem, starts, goals):
                     #print('after expand', paths[i])
                     continue
             move[i] += 1
-            #print('move', i, move[i], paths[i])
 
-# MAIN
-#ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("input.txt")
-#START = STARTS[0]
-#GOAL = GOALS[0]
-#PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL)
-
-#paths, goals = Level4MultiAgent(PROBLEM, STARTS, GOALS)
-#print('goals', goals)
-#for i in range(len(paths)):
-    #print(f'path S{i}', paths[i])
-
-#row, col, time, fuel, graph, start, goal = PROBLEM
-#print(A_star_level_4((row, col, time, fuel, fuel, graph, start, goal)))
-#print(A_star_level_2(PROBLEM))
