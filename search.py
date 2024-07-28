@@ -50,7 +50,7 @@ def bfs_heuristic(node, graph, row, col):
     for i in range(row):
         for j in range(col):
             if visited[i][j] == -1 and graph[i][j] != -1:
-                visited[i][j] = manhattan(graph[i][j], node)
+                visited[i][j] = manhattan((i, j), node)
     return visited
 
 def manhattan(start, end):
