@@ -504,8 +504,8 @@ def main():
         PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
         sim = Simulator(winW, winH, PROBLEM)
         print("Run simulation")
-        sim.run()
         print("If you want another input, please turn off the Simulation window")
+        sim.run()
         filepath = input("Problem file path (0 to exit program): ")
 
 main()
