@@ -498,7 +498,7 @@ def main():
         print("Start initializing problem...")
         pg.init()
         pg.font.init()
-        ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file("testcases\\" + filepath)
+        ROW, COL, TIME, FUEL, GRAPH, STARTS, GOALS = read_file(filepath)
         START = STARTS[0]
         GOAL = GOALS[0]
         PROBLEM = (ROW, COL, TIME, FUEL, GRAPH, START, GOAL, STARTS, GOALS)
